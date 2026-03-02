@@ -1,0 +1,18 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# .NET
+*.cs   text diff=csharp
+*.csproj text
+*.sln  text
+*.slnx text
+
+# Frontend
+*.js   text
+*.jsx  text
+*.ts   text
+*.tsx  text
+*.json text
+*.css  text
+*.scss text
+*.html text

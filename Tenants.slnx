@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="Tenants.AppHost/Tenants.AppHost.csproj" />
+  <Project Path="tenants.client/tenants.client.esproj">
+    <Build />
+  </Project>
+  <Project Path="Tenants.Server/Tenants.Server.csproj" />
+  <Project Path="Tenants.ServiceDefaults/Tenants.ServiceDefaults.csproj" />
+</Solution>

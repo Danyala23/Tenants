@@ -24,4 +24,8 @@
     <ProjectReference Include="..\Tenants.ServiceDefaults\Tenants.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <Target Name="EnsureWwwRoot" BeforeTargets="Build">
+    <MakeDir Directories="wwwroot" />
+  </Target>
+
 </Project>

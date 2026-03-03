@@ -1,4 +1,4 @@
-import type { Property, Floor, Tenant, RentPayment, RentIncreaseRule, Bill } from './types';
+import type { Property, Floor, Tenant, Occupancy, RentPayment, RentIncreaseRule, Bill } from './types';
 
 const API = '/api';
 const TOKEN_KEY = 'authToken';
@@ -53,13 +53,25 @@ export const api = {
   },
 
   tenants: {
-    listByFloor: (floorId: number) => fetchApi<Tenant[]>(`/floors/${floorId}/tenants`),
+    list: () => fetchApi<Tenant[]>('/tenants'),
     get: (id: number) => fetchApi<Tenant>(`/tenants/${id}`),
-    create: (floorId: number, data: { name: string; phoneNumber: string; rent: number; securityDeposit: number; startDate: string }) =>
-      fetchApi<Tenant>(`/floors/${floorId}/tenants`, { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: number, data: { name?: string; phoneNumber?: string; rent?: number; securityDeposit?: number; startDate?: string }) =>
+    create: (data: { name: string; phoneNumber: string }) =>
+      fetchApi<Tenant>('/tenants', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: { name?: string; phoneNumber?: string }) =>
       fetchApi<Tenant>(`/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: number) => fetchApi<void>(`/tenants/${id}`, { method: 'DELETE' }),
+  },
+
+  occupancies: {
+    listByFloor: (floorId: number) => fetchApi<Occupancy[]>(`/floors/${floorId}/occupancies`),
+    listByProperty: (propertyId: number) => fetchApi<Occupancy[]>(`/properties/${propertyId}/occupancies`),
+    listByTenant: (tenantId: number) => fetchApi<Occupancy[]>(`/tenants/${tenantId}/occupancies`),
+    get: (id: number) => fetchApi<Occupancy>(`/occupancies/${id}`),
+    create: (propertyId: number, data: { tenantId?: number; name?: string; phoneNumber?: string; floorId?: number; rent: number; securityDeposit: number; startDate: string }) =>
+      fetchApi<Occupancy>(`/properties/${propertyId}/occupancies`, { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: { floorId?: number | null; rent?: number; securityDeposit?: number; startDate?: string }) =>
+      fetchApi<Occupancy>(`/occupancies/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: number) => fetchApi<void>(`/occupancies/${id}`, { method: 'DELETE' }),
   },
 
   bills: {
@@ -73,12 +85,12 @@ export const api = {
   },
 
   payments: {
-    listByTenant: (tenantId: number) => fetchApi<RentPayment[]>(`/tenants/${tenantId}/payments`),
+    listByOccupancy: (occupancyId: number) => fetchApi<RentPayment[]>(`/occupancies/${occupancyId}/payments`),
   },
 
   rentIncrease: {
-    get: (tenantId: number) => fetchApi<RentIncreaseRule>(`/tenants/${tenantId}/rent-increase`),
-    update: (tenantId: number, data: { increasePercent?: number; nextIncreaseDate?: string }) =>
-      fetchApi<RentIncreaseRule>(`/tenants/${tenantId}/rent-increase`, { method: 'PUT', body: JSON.stringify(data) }),
+    get: (occupancyId: number) => fetchApi<RentIncreaseRule>(`/occupancies/${occupancyId}/rent-increase`),
+    update: (occupancyId: number, data: { increasePercent?: number; nextIncreaseDate?: string }) =>
+      fetchApi<RentIncreaseRule>(`/occupancies/${occupancyId}/rent-increase`, { method: 'PUT', body: JSON.stringify(data) }),
   },
 };

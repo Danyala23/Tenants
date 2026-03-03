@@ -15,9 +15,20 @@ export interface Floor {
 
 export interface Tenant {
   id: number;
-  floorId: number;
   name: string;
   phoneNumber: string;
+}
+
+/** Represents a tenant's occupancy of a floor — a tenant can have multiple occupancies (multiple floors). */
+export interface Occupancy {
+  id: number;
+  tenantId: number;
+  tenantName: string;
+  tenantPhone: string;
+  propertyId: number;
+  floorId: number | null;
+  floorLabel: string | null;
+  isWholeProperty: boolean;
   rent: number;
   securityDeposit: number;
   startDate: string;
@@ -25,7 +36,7 @@ export interface Tenant {
 
 export interface RentPayment {
   id: number;
-  tenantId: number;
+  tenantOccupancyId: number;
   year: number;
   month: number;
   isPaid: boolean;
@@ -33,7 +44,7 @@ export interface RentPayment {
 
 export interface RentIncreaseRule {
   id: number;
-  tenantId: number;
+  tenantOccupancyId: number;
   increasePercent: number;
   nextIncreaseDate: string;
 }

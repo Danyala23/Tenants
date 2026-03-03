@@ -22,4 +22,4 @@ public record CreateOccupancyRequest(
     decimal SecurityDeposit,
     DateTime StartDate);
 
-public record UpdateOccupancyRequest(decimal? Rent, decimal? SecurityDeposit, DateTime? StartDate);
+public record UpdateOccupancyRequest(int? FloorId, decimal? Rent, decimal? SecurityDeposit, DateTime? StartDate);

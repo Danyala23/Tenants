@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
+import { useNotifications } from "../context/NotificationContext";
 import type { Property } from "../types";
 
 export function Dashboard() {
+  const { confirm } = useNotifications();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -63,8 +65,12 @@ export function Dashboard() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Delete this property and all its floors and tenants?"))
-      return;
+    const ok = await confirm({
+      message: "Delete this property and all its floors and tenants?",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await api.properties.delete(id);
       loadProperties();
@@ -84,8 +90,12 @@ export function Dashboard() {
   return (
     <div className="container py-4 page page-dashboard">
       <div className="d-flex justify-content-between align-items-center mb-4 page-header">
-        <h2>Properties</h2>
+        <h2>
+          <i className="bi bi-building me-2" aria-hidden />
+          Properties
+        </h2>
         <button className="btn btn-primary btn-glow" onClick={openCreate}>
+          <i className="bi bi-plus-lg me-1" aria-hidden />
           Add Property
         </button>
       </div>
@@ -98,28 +108,33 @@ export function Dashboard() {
             <div className="card h-100 app-card">
               <div className="card-body">
                 <h5 className="card-title">
+                  <i className="bi bi-house-door me-1 text-muted" aria-hidden />
                   {p.houseNumber} — {p.address}
                 </h5>
                 <p className="card-text text-muted small">
-                  Size: {p.size} sq ft
+                  <i className="bi bi-arrows-angle-expand me-1" aria-hidden />
+                  {p.size} sq ft
                 </p>
                 <div className="d-flex gap-2 mt-3">
                   <button
                     className="btn btn-sm btn-primary"
                     onClick={() => navigate(`/properties/${p.id}`)}
                   >
+                    <i className="bi bi-eye me-1" aria-hidden />
                     View
                   </button>
                   <button
                     className="btn btn-sm btn-outline-secondary"
                     onClick={() => openEdit(p)}
                   >
+                    <i className="bi bi-pencil me-1" aria-hidden />
                     Edit
                   </button>
                   <button
                     className="btn btn-sm btn-outline-danger"
                     onClick={() => handleDelete(p.id)}
                   >
+                    <i className="bi bi-trash me-1" aria-hidden />
                     Delete
                   </button>
                 </div>
@@ -139,6 +154,7 @@ export function Dashboard() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
+                  <i className={`bi ${editing ? "bi-pencil" : "bi-plus-lg"} me-2`} aria-hidden />
                   {editing ? "Edit Property" : "Add Property"}
                 </h5>
                 <button

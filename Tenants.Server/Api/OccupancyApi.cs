@@ -78,10 +78,12 @@ public static class OccupancyApi
         {
             var o = await db.TenantOccupancies.Include(x => x.Tenant).Include(x => x.Floor).FirstOrDefaultAsync(x => x.Id == id);
             if (o == null) return Results.NotFound();
+            if (req.FloorId.HasValue) o.FloorId = req.FloorId.Value;
             if (req.Rent.HasValue) o.Rent = req.Rent.Value;
             if (req.SecurityDeposit.HasValue) o.SecurityDeposit = req.SecurityDeposit.Value;
             if (req.StartDate.HasValue) o.StartDate = req.StartDate.Value;
             await db.SaveChangesAsync();
+            o = await db.TenantOccupancies.Include(x => x.Tenant).Include(x => x.Floor).FirstAsync(x => x.Id == id);
             return Results.Ok(new OccupancyDto(o.Id, o.TenantId, o.Tenant.Name, o.Tenant.PhoneNumber, o.PropertyId, o.FloorId, o.Floor?.Label, o.FloorId == null, o.Rent, o.SecurityDeposit, o.StartDate));
         });
 

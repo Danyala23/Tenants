@@ -146,6 +146,21 @@ a {
 }
 
 /* ───────────────────────────────────────────────────────────
+   ICONS – Bootstrap Icons alignment
+   ─────────────────────────────────────────────────────────── */
+.bi {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Card content: icons sit high in Bootstrap Icons font; nudge down */
+.card-title .bi,
+.card-text .bi {
+  vertical-align: -0.3em;
+}
+
+/* ───────────────────────────────────────────────────────────
    NAVBAR
    ─────────────────────────────────────────────────────────── */
 .app-navbar {
@@ -365,6 +380,18 @@ a {
   &:hover,
   &:focus {
     background: var(--c-primary) !important;
+    color: #fff !important;
+  }
+}
+
+.btn-danger {
+  background: var(--c-danger) !important;
+  color: #fff !important;
+  border: none !important;
+
+  &:hover,
+  &:focus {
+    filter: brightness(1.1);
     color: #fff !important;
   }
 }
@@ -719,5 +746,85 @@ dd {
 
   to {
     opacity: 1;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────
+   TOAST NOTIFICATIONS
+   ─────────────────────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 22rem;
+  pointer-events: none;
+}
+
+.toast-item {
+  pointer-events: auto;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid transparent;
+  animation: toastSlide 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.95;
+  }
+}
+
+.toast-icon {
+  flex-shrink: 0;
+}
+
+.toast-message {
+  color: inherit;
+}
+
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.toast-info {
+  background: var(--c-bg-elevated);
+  color: var(--c-text);
+  border-color: var(--c-border);
+}
+
+.toast-success {
+  background: var(--c-success-subtle);
+  color: var(--c-success);
+  border-color: var(--c-success-subtle);
+}
+
+.toast-warning {
+  background: var(--c-warning-subtle);
+  color: var(--c-warning);
+  border-color: var(--c-warning-subtle);
+}
+
+.toast-error {
+  background: var(--c-danger-subtle);
+  color: var(--c-danger);
+  border-color: var(--c-danger-subtle);
+}
+
+@keyframes toastSlide {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

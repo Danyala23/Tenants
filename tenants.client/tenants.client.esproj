@@ -3,8 +3,8 @@
     <StartupCommand>npm run dev</StartupCommand>
     <JavaScriptTestRoot>src\</JavaScriptTestRoot>
     <JavaScriptTestFramework>Vitest</JavaScriptTestFramework>
-    <!-- Allows the build (or compile) script located on package.json to run on Build -->
-    <ShouldRunBuildScript>false</ShouldRunBuildScript>
+    <!-- Run the client's build script (npm run build) on dotnet build/publish -->
+    <ShouldRunBuildScript>true</ShouldRunBuildScript>
     <!-- Folder where production build objects will be placed -->
     <BuildOutputFolder>$(MSBuildProjectDirectory)\dist</BuildOutputFolder>
   </PropertyGroup>

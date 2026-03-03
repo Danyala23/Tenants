@@ -1,32 +1,36 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import type { Property, Floor, Tenant, Bill } from "../types";
+import { useNotifications } from "../context/NotificationContext";
+import type { Property, Floor, Occupancy, Bill } from "../types";
 
 export function PropertyDetail() {
+  const { toast, confirm } = useNotifications();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const propertyId = parseInt(id ?? "0", 10);
   const [property, setProperty] = useState<Property | null>(null);
   const [floors, setFloors] = useState<Floor[]>([]);
-  const [tenantsByFloor, setTenantsByFloor] = useState<
-    Record<number, Tenant[]>
+  const [occupanciesByFloor, setOccupanciesByFloor] = useState<
+    Record<number, Occupancy[]>
   >({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"floors" | "tenants" | "bills">(
     "floors"
   );
   const [floorModal, setFloorModal] = useState(false);
-  const [tenantModal, setTenantModal] = useState<number | null>(null);
+  const [tenantModal, setTenantModal] = useState(false);
   const [editingFloor, setEditingFloor] = useState<Floor | null>(null);
-  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [editingOccupancy, setEditingOccupancy] = useState<Occupancy | null>(null);
   const [floorForm, setFloorForm] = useState({ floorNumber: 0, label: "" });
-  const [tenantForm, setTenantForm] = useState({
+  const [occupancyForm, setOccupancyForm] = useState({
     name: "",
     phoneNumber: "",
     rent: 0,
     securityDeposit: 0,
     startDate: new Date().toISOString().slice(0, 10),
+    floorIds: [] as number[],
+    existingTenantId: null as number | null,
   });
   const [bills, setBills] = useState<Bill[]>([]);
   const [billYear, setBillYear] = useState(new Date().getFullYear());
@@ -38,21 +42,34 @@ export function PropertyDetail() {
   }, [propertyId]);
 
   async function loadData() {
+    setLoading(true);
     try {
-      const [p, fList] = await Promise.all([
-        api.properties.get(propertyId),
-        api.floors.listByProperty(propertyId),
-      ]);
+      const propertyPromise = api.properties.get(propertyId);
+      const floorsPromise = api.floors
+        .listByProperty(propertyId)
+        .catch((error) => {
+          console.error("Failed to load floors", error);
+          return [] as Floor[];
+        });
+
+      const [p, fList] = await Promise.all([propertyPromise, floorsPromise]);
       setProperty(p);
       setFloors(fList);
-      const tenants: Record<number, Tenant[]> = {};
+
+      const occupancies: Record<number, Occupancy[]> = {};
       await Promise.all(
         fList.map(async (f) => {
-          tenants[f.id] = await api.tenants.listByFloor(f.id);
+          try {
+            occupancies[f.id] = await api.occupancies.listByFloor(f.id);
+          } catch (error) {
+            console.error("Failed to load occupancies for floor", f.id, error);
+            occupancies[f.id] = [];
+          }
         })
       );
-      setTenantsByFloor(tenants);
-    } catch {
+      setOccupanciesByFloor(occupancies);
+    } catch (error) {
+      console.error("Failed to load property", error);
       setProperty(null);
     } finally {
       setLoading(false);
@@ -87,7 +104,12 @@ export function PropertyDetail() {
   }
 
   async function handleFloorDelete(floorId: number) {
-    if (!confirm("Delete this floor and its tenants?")) return;
+    const ok = await confirm({
+      message: "Delete this floor and its tenants?",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await api.floors.delete(floorId);
       loadData();
@@ -96,40 +118,94 @@ export function PropertyDetail() {
     }
   }
 
-  function openTenantCreate(floorId: number) {
-    setTenantModal(floorId);
-    setEditingTenant(null);
-    setTenantForm({
+  function openTenantCreate( preselectedFloorId?: number) {
+    setTenantModal(true);
+    setEditingOccupancy(null);
+    setOccupancyForm({
       name: "",
       phoneNumber: "",
       rent: 0,
       securityDeposit: 0,
       startDate: new Date().toISOString().slice(0, 10),
+      floorIds: preselectedFloorId ? [preselectedFloorId] : [],
+      existingTenantId: null,
     });
   }
 
-  function openTenantEdit(t: Tenant) {
-    setTenantModal(t.floorId);
-    setEditingTenant(t);
-    setTenantForm({
-      name: t.name,
-      phoneNumber: t.phoneNumber,
-      rent: t.rent,
-      securityDeposit: t.securityDeposit,
-      startDate: t.startDate.slice(0, 10),
+  function openOccupancyEdit(occ: Occupancy) {
+    setTenantModal(true);
+    setEditingOccupancy(occ);
+    setOccupancyForm({
+      name: occ.tenantName,
+      phoneNumber: occ.tenantPhone,
+      rent: occ.rent,
+      securityDeposit: occ.securityDeposit,
+      startDate: occ.startDate.slice(0, 10),
+      floorIds:
+        occ.floorId != null ? [occ.floorId] : floors.length > 0 ? [floors[0].id] : [],
+      existingTenantId: null,
     });
   }
 
-  async function handleTenantSubmit(e: React.FormEvent) {
+  function toggleFloorInForm(floorId: number) {
+    setOccupancyForm((f) => ({
+      ...f,
+      floorIds: f.floorIds.includes(floorId)
+        ? f.floorIds.filter((id) => id !== floorId)
+        : [...f.floorIds, floorId],
+    }));
+  }
+
+  async function handleOccupancySubmit(e: React.FormEvent) {
     e.preventDefault();
-    const floorId = tenantModal!;
+    const floorIds = occupancyForm.floorIds;
+    if (floorIds.length === 0) {
+      toast({ message: "Select at least one floor.", type: "warning" });
+      return;
+    }
     try {
-      if (editingTenant) {
-        await api.tenants.update(editingTenant.id, tenantForm);
+      if (editingOccupancy) {
+        await api.occupancies.update(editingOccupancy.id, {
+          floorId: floorIds[0],
+          rent: occupancyForm.rent,
+          securityDeposit: occupancyForm.securityDeposit,
+          startDate: occupancyForm.startDate,
+        });
+        await api.tenants.update(editingOccupancy.tenantId, {
+          name: occupancyForm.name,
+          phoneNumber: occupancyForm.phoneNumber,
+        });
       } else {
-        await api.tenants.create(floorId, tenantForm);
+        const rentPerFloor = occupancyForm.rent / floorIds.length;
+        const securityDepositPerFloor = occupancyForm.securityDeposit / floorIds.length;
+
+        if (occupancyForm.existingTenantId) {
+          for (const floorId of floorIds) {
+            await api.occupancies.create(propertyId, {
+              tenantId: occupancyForm.existingTenantId,
+              floorId,
+              rent: rentPerFloor,
+              securityDeposit: securityDepositPerFloor,
+              startDate: occupancyForm.startDate,
+            });
+          }
+        } else {
+          const tenant = await api.tenants.create({
+            name: occupancyForm.name,
+            phoneNumber: occupancyForm.phoneNumber,
+          });
+          for (const floorId of floorIds) {
+            await api.occupancies.create(propertyId, {
+              tenantId: tenant.id,
+              floorId,
+              rent: rentPerFloor,
+              securityDeposit: securityDepositPerFloor,
+              startDate: occupancyForm.startDate,
+            });
+          }
+        }
       }
-      setTenantModal(null);
+      setTenantModal(false);
       loadData();
     } catch (error) {
       console.error(error);
@@ -156,10 +232,15 @@ export function PropertyDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, propertyId, billYear, billMonth]);
 
-  async function handleTenantDelete(t: Tenant) {
-    if (!confirm("Delete this tenant?")) return;
+  async function handleOccupancyDelete(occ: Occupancy) {
+    const ok = await confirm({
+      message: `Remove ${occ.tenantName} from this floor?`,
+      confirmLabel: "Remove",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
-      await api.tenants.delete(t.id);
+      await api.occupancies.delete(occ.id);
       loadData();
     } catch (error) {
       console.error(error);
@@ -184,12 +265,17 @@ export function PropertyDetail() {
             className="btn btn-link text-decoration-none p-0 mb-2"
             onClick={() => navigate("/")}
           >
-            ← Back
+            <i className="bi bi-arrow-left me-1" aria-hidden />
+            Back
           </button>
           <h2>
+            <i className="bi bi-building me-2" aria-hidden />
             {property.houseNumber} — {property.address}
           </h2>
-          <p className="text-muted">Size: {property.size} sq ft</p>
+          <p className="text-muted">
+            <i className="bi bi-arrows-angle-expand me-1" aria-hidden />
+            Size: {property.size} sq ft
+          </p>
         </div>
       </div>
 
@@ -199,6 +285,7 @@ export function PropertyDetail() {
             className={`nav-link ${activeTab === "floors" ? "active" : ""}`}
             onClick={() => setActiveTab("floors")}
           >
+            <i className="bi bi-layers me-1" aria-hidden />
             Floors
           </button>
         </li>
@@ -207,6 +294,7 @@ export function PropertyDetail() {
             className={`nav-link ${activeTab === "tenants" ? "active" : ""}`}
             onClick={() => setActiveTab("tenants")}
           >
+            <i className="bi bi-people me-1" aria-hidden />
             Tenants
           </button>
         </li>
@@ -215,6 +303,7 @@ export function PropertyDetail() {
             className={`nav-link ${activeTab === "bills" ? "active" : ""}`}
             onClick={() => setActiveTab("bills")}
           >
+            <i className="bi bi-receipt me-1" aria-hidden />
             Bills
           </button>
         </li>
@@ -223,11 +312,15 @@ export function PropertyDetail() {
       {activeTab === "floors" && (
         <div>
           <div className="d-flex justify-content-between mb-3">
-            <h5>Floors</h5>
+            <h5>
+              <i className="bi bi-layers me-1" aria-hidden />
+              Floors
+            </h5>
             <button
               className="btn btn-sm btn-primary"
               onClick={openFloorCreate}
             >
+              <i className="bi bi-plus-lg me-1" aria-hidden />
               Add Floor
             </button>
           </div>
@@ -245,18 +338,20 @@ export function PropertyDetail() {
                 <tr key={f.id}>
                   <td>{f.floorNumber}</td>
                   <td>{f.label || "-"}</td>
-                  <td>{(tenantsByFloor[f.id] ?? []).length}</td>
+                  <td>{(occupanciesByFloor[f.id] ?? []).length}</td>
                   <td>
                     <button
                       className="btn btn-sm btn-outline-secondary me-1"
                       onClick={() => openFloorEdit(f)}
                     >
+                      <i className="bi bi-pencil me-1" aria-hidden />
                       Edit
                     </button>
                     <button
                       className="btn btn-sm btn-outline-danger"
                       onClick={() => handleFloorDelete(f.id)}
                     >
+                      <i className="bi bi-trash me-1" aria-hidden />
                       Delete
                     </button>
                   </td>
@@ -282,6 +377,7 @@ export function PropertyDetail() {
                   className="btn btn-sm btn-primary"
                   onClick={() => openTenantCreate(f.id)}
                 >
+                  <i className="bi bi-person-plus me-1" aria-hidden />
                   Add Tenant
                 </button>
               </div>
@@ -296,37 +392,40 @@ export function PropertyDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(tenantsByFloor[f.id] ?? []).map((t) => (
-                    <tr key={t.id}>
-                      <td>{t.name}</td>
-                      <td>{t.phoneNumber}</td>
-                      <td>{t.rent}</td>
-                      <td>{t.startDate.slice(0, 10)}</td>
+                  {(occupanciesByFloor[f.id] ?? []).map((occ) => (
+                    <tr key={occ.id}>
+                      <td>{occ.tenantName}</td>
+                      <td>{occ.tenantPhone}</td>
+                      <td>{occ.rent}</td>
+                      <td>{occ.startDate.slice(0, 10)}</td>
                       <td>
                         <button
                           className="btn btn-sm btn-outline-primary me-1"
-                          onClick={() => navigate(`/tenants/${t.id}`)}
+                          onClick={() => navigate(`/tenants/${occ.tenantId}`)}
                         >
+                          <i className="bi bi-eye me-1" aria-hidden />
                           View
                         </button>
                         <button
                           className="btn btn-sm btn-outline-secondary me-1"
-                          onClick={() => openTenantEdit(t)}
+                          onClick={() => openOccupancyEdit(occ)}
                         >
+                          <i className="bi bi-pencil me-1" aria-hidden />
                           Edit
                         </button>
                         <button
                           className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleTenantDelete(t)}
+                          onClick={() => handleOccupancyDelete(occ)}
                         >
-                          Delete
+                          <i className="bi bi-person-x me-1" aria-hidden />
+                          Remove
                         </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {(tenantsByFloor[f.id] ?? []).length === 0 && (
+              {(occupanciesByFloor[f.id] ?? []).length === 0 && (
                 <p className="text-muted small">No tenants on this floor.</p>
               )}
             </div>
@@ -377,6 +476,7 @@ export function PropertyDetail() {
               className="btn btn-sm btn-outline-secondary"
               onClick={loadBills}
             >
+              <i className="bi bi-arrow-clockwise me-1" aria-hidden />
               Refresh
             </button>
           </div>
@@ -404,6 +504,7 @@ export function PropertyDetail() {
                         b.isPaid ? "bg-success" : "bg-secondary"
                       }`}
                     >
+                      <i className={`bi ${b.isPaid ? "bi-check-circle" : "bi-clock"} me-1`} aria-hidden />
                       {b.isPaid ? "Paid" : "Unpaid"}
                     </span>
                   </td>
@@ -427,6 +528,7 @@ export function PropertyDetail() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
+                  <i className={`bi ${editingFloor ? "bi-pencil" : "bi-plus-lg"} me-2`} aria-hidden />
                   {editingFloor ? "Edit Floor" : "Add Floor"}
                 </h5>
                 <button
@@ -483,32 +585,34 @@ export function PropertyDetail() {
         </div>
       )}
 
-      {tenantModal !== null && (
+      {tenantModal && (
         <div className="modal show d-block" tabIndex={-1}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
-                  {editingTenant ? "Edit Tenant" : "Add Tenant"}
+                  <i className={`bi ${editingOccupancy ? "bi-pencil" : "bi-person-plus"} me-2`} aria-hidden />
+                  {editingOccupancy ? "Edit Occupancy" : "Add Tenant"}
                 </h5>
                 <button
                   type="button"
                   className="btn-close"
-                  onClick={() => setTenantModal(null)}
+                  onClick={() => setTenantModal(false)}
                 />
               </div>
-              <form onSubmit={handleTenantSubmit}>
+              <form onSubmit={handleOccupancySubmit}>
                 <div className="modal-body">
                   <div className="mb-2">
                     <label className="form-label">Name</label>
                     <input
                       type="text"
                       className="form-control"
-                      value={tenantForm.name}
+                      value={occupancyForm.name}
                       onChange={(e) =>
-                        setTenantForm((f) => ({ ...f, name: e.target.value }))
+                        setOccupancyForm((f) => ({ ...f, name: e.target.value }))
                       }
-                      required
+                      disabled={!!occupancyForm.existingTenantId}
+                      required={!occupancyForm.existingTenantId}
                     />
                   </div>
                   <div className="mb-2">
@@ -516,24 +620,79 @@ export function PropertyDetail() {
                     <input
                       type="text"
                       className="form-control"
-                      value={tenantForm.phoneNumber}
+                      value={occupancyForm.phoneNumber}
                       onChange={(e) =>
-                        setTenantForm((f) => ({
+                        setOccupancyForm((f) => ({
                           ...f,
                           phoneNumber: e.target.value,
                         }))
                       }
+                      disabled={!!occupancyForm.existingTenantId}
                     />
                   </div>
                   <div className="mb-2">
-                    <label className="form-label">Rent</label>
+                    <label className="form-label">
+                      {editingOccupancy ? "Floor" : "Floors"}
+                    </label>
+                    {editingOccupancy ? (
+                      <select
+                        className="form-select"
+                        value={
+                          occupancyForm.floorIds[0] ?? ""
+                        }
+                        onChange={(e) =>
+                          setOccupancyForm((f) => ({
+                            ...f,
+                            floorIds: e.target.value
+                              ? [parseInt(e.target.value)]
+                              : [],
+                          }))
+                        }
+                      >
+                        {floors.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            Floor {f.floorNumber} {f.label ? `(${f.label})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <>
+                        <div className="d-flex flex-wrap gap-2">
+                          {floors.map((f) => (
+                            <label
+                              key={f.id}
+                              className="form-check form-check-inline"
+                            >
+                              <input
+                                type="checkbox"
+                                className="form-check-input"
+                                checked={occupancyForm.floorIds.includes(f.id)}
+                                onChange={() => toggleFloorInForm(f.id)}
+                              />
+                              <span className="form-check-label">
+                                {f.floorNumber}{" "}
+                                {f.label ? `(${f.label})` : ""}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        <small className="text-muted">
+                          Select one or more floors for this tenant.
+                        </small>
+                      </>
+                    )}
+                  </div>
+                  <div className="mb-2">
+                    <label className="form-label">
+                      Rent {!editingOccupancy && occupancyForm.floorIds.length > 1 ? "(total)" : ""}
+                    </label>
                     <input
                       type="number"
                       step="0.01"
                       className="form-control"
-                      value={tenantForm.rent || ""}
+                      value={occupancyForm.rent || ""}
                       onChange={(e) =>
-                        setTenantForm((f) => ({
+                        setOccupancyForm((f) => ({
                           ...f,
                           rent: parseFloat(e.target.value) || 0,
                         }))
@@ -541,28 +700,36 @@ export function PropertyDetail() {
                     />
                   </div>
                   <div className="mb-2">
-                    <label className="form-label">Security Deposit</label>
+                    <label className="form-label">
+                      Security Deposit {!editingOccupancy && occupancyForm.floorIds.length > 1 ? "(total)" : ""}
+                    </label>
                     <input
                       type="number"
                       step="0.01"
                       className="form-control"
-                      value={tenantForm.securityDeposit || ""}
+                      value={occupancyForm.securityDeposit || ""}
                       onChange={(e) =>
-                        setTenantForm((f) => ({
+                        setOccupancyForm((f) => ({
                           ...f,
                           securityDeposit: parseFloat(e.target.value) || 0,
                         }))
                       }
                     />
+                    {!editingOccupancy &&
+                      occupancyForm.floorIds.length > 1 && (
+                        <small className="text-muted d-block mt-1">
+                          Split across {occupancyForm.floorIds.length} floors: {(occupancyForm.rent / occupancyForm.floorIds.length).toFixed(2)} rent and {(occupancyForm.securityDeposit / occupancyForm.floorIds.length).toFixed(2)} deposit per floor
+                        </small>
+                      )}
                   </div>
                   <div className="mb-2">
                     <label className="form-label">Start Date</label>
                     <input
                       type="date"
                       className="form-control"
-                      value={tenantForm.startDate}
+                      value={occupancyForm.startDate}
                       onChange={(e) =>
-                        setTenantForm((f) => ({
+                        setOccupancyForm((f) => ({
                           ...f,
                           startDate: e.target.value,
                         }))
@@ -575,12 +742,12 @@ export function PropertyDetail() {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => setTenantModal(null)}
+                    onClick={() => setTenantModal(false)}
                   >
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    {editingTenant ? "Save" : "Add"}
+                    {editingOccupancy ? "Save" : "Add"}
                   </button>
                 </div>
               </form>

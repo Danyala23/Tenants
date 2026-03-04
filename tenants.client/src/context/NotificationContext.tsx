@@ -192,7 +192,7 @@ function ConfirmDialog({
               className="btn btn-secondary"
               onClick={onCancel}
             >
-              <i className="bi bi-x-lg me-1" aria-hidden />
+              <i className="bi bi-x-lg" aria-hidden />
               {cancelLabel}
             </button>
             <button
@@ -200,7 +200,7 @@ function ConfirmDialog({
               className={variant === "danger" ? "btn btn-danger" : "btn btn-primary"}
               onClick={onConfirm}
             >
-              <i className={`bi me-1 ${variant === "danger" ? "bi-trash" : "bi-check-lg"}`} aria-hidden />
+              <i className={`bi ${variant === "danger" ? "bi-trash" : "bi-check-lg"}`} aria-hidden />
               {confirmLabel}
             </button>
           </div>

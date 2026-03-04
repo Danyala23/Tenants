@@ -82,7 +82,11 @@ export function Login() {
       <div className="card auth-card">
         <div className="card-body p-4 p-md-5">
           <h3 className="card-title text-center mb-1">
-            <i className="bi bi-building d-block mb-2" style={{ fontSize: "2.5rem" }} aria-hidden />
+            <i
+              className="bi bi-building d-block mb-2"
+              style={{ fontSize: "2.5rem" }}
+              aria-hidden
+            />
             Property Manager
           </h3>
           <p
@@ -134,12 +138,16 @@ export function Login() {
             >
               {loading ? (
                 <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                  <span
+                    className="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                  />
                   Signing in...
                 </>
               ) : (
                 <>
-                  <i className="bi bi-box-arrow-in-right me-2" aria-hidden />
+                  <i className="bi bi-box-arrow-in-right" aria-hidden />
                   Sign In
                 </>
               )}

@@ -40,6 +40,7 @@ export interface RentPayment {
   year: number;
   month: number;
   isPaid: boolean;
+  amountPaid: number;
 }
 
 export interface RentIncreaseRule {

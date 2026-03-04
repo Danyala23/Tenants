@@ -114,20 +114,19 @@ export function TenantDetail() {
         className="btn btn-link text-decoration-none p-0 mb-3"
         onClick={() => navigate(-1)}
       >
-        <i className="bi bi-arrow-left me-1" aria-hidden />
-        Back
+        <i className="bi bi-arrow-left" aria-hidden /> Back
       </button>
-      <h2>
-        <i className="bi bi-person me-2" aria-hidden />
+      <h2 className="d-inline-flex align-items-center gap-2">
+        <i className="bi bi-person" aria-hidden />
         {tenant.name}
       </h2>
-      <p className="text-muted">
-        <i className="bi bi-telephone me-1" aria-hidden />
+      <p className="text-muted d-inline-flex align-items-center gap-1">
+        <i className="bi bi-telephone" aria-hidden />
         {tenant.phoneNumber}
       </p>
 
-      <h5 className="mt-4">
-        <i className="bi bi-layers me-1" aria-hidden />
+      <h5 className="mt-4 section-heading">
+        <i className="bi bi-layers" aria-hidden />
         Occupancies (Floors)
       </h5>
       {occupancies.map((occ) => {
@@ -150,8 +149,8 @@ export function TenantDetail() {
         return (
           <div key={occ.id} className="card mb-4">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <strong>
-                <i className="bi bi-door-open me-1" aria-hidden />
+              <strong className="d-inline-flex align-items-center gap-1">
+                <i className="bi bi-door-open" aria-hidden />
                 {occ.isWholeProperty
                   ? "Whole property"
                   : `Floor ${occ.floorLabel ?? occ.floorId ?? "-"}`}
@@ -178,8 +177,7 @@ export function TenantDetail() {
                     className="btn btn-sm btn-warning"
                     onClick={() => openIncreaseModal(occ)}
                   >
-                    <i className="bi bi-arrow-up me-1" aria-hidden />
-                    Adjust
+                    <i className="bi bi-arrow-up" aria-hidden /> Adjust
                   </button>
                 </div>
               )}
@@ -187,21 +185,21 @@ export function TenantDetail() {
               {rentIncrease && !isPendingIncrease && (
                 <div className="d-flex justify-content-between align-items-center mt-3">
                   <p className="text-muted mb-0">
-                    Next increase: {rentIncrease.nextIncreaseDate.slice(0, 10)} ·{" "}
+                    Next increase:{" "}
+                    {rentIncrease.nextIncreaseDate.slice(0, 10)} ·{" "}
                     {rentIncrease.increasePercent}%
                   </p>
                   <button
                     className="btn btn-sm btn-outline-secondary"
                     onClick={() => openIncreaseModal(occ)}
                   >
-                    <i className="bi bi-pencil me-1" aria-hidden />
-                    Edit
+                    <i className="bi bi-pencil" aria-hidden /> Edit
                   </button>
                 </div>
               )}
 
-              <h6 className="mt-3">
-                <i className="bi bi-cash-stack me-1" aria-hidden />
+              <h6 className="mt-3 d-inline-flex align-items-center gap-1">
+                <i className="bi bi-cash-stack" aria-hidden />
                 Rent Payments
               </h6>
               <table className="table table-sm table-striped app-table">
@@ -223,7 +221,10 @@ export function TenantDetail() {
                             p.isPaid ? "bg-success" : "bg-secondary"
                           }`}
                         >
-                          <i className={`bi ${p.isPaid ? "bi-check-circle" : "bi-clock"} me-1`} aria-hidden />
+                          <i
+                            className={`bi ${p.isPaid ? "bi-check-circle-fill" : "bi-clock"}`}
+                            aria-hidden
+                          />
                           {p.isPaid ? "Paid" : "Unpaid"}
                         </span>
                       </td>
@@ -247,8 +248,8 @@ export function TenantDetail() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">
-                  <i className="bi bi-percent me-2" aria-hidden />
+                <h5 className="modal-title d-inline-flex align-items-center gap-2">
+                  <i className="bi bi-percent" aria-hidden />
                   Edit Rent Increase Rule
                 </h5>
                 <button

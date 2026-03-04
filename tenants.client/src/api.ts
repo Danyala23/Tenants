@@ -86,6 +86,8 @@ export const api = {
 
   payments: {
     listByOccupancy: (occupancyId: number) => fetchApi<RentPayment[]>(`/occupancies/${occupancyId}/payments`),
+    collect: (occupancyId: number, data: { year: number; month: number; amountPaid: number }) =>
+      fetchApi<RentPayment>(`/occupancies/${occupancyId}/payments/collect`, { method: 'PUT', body: JSON.stringify(data) }),
   },
 
   rentIncrease: {

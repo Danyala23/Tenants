@@ -52,8 +52,11 @@ export function Navbar() {
   return (
     <nav className="app-navbar">
       <div className="container d-flex align-items-center justify-content-between">
-        <span className="app-brand" onClick={() => navigate("/")}>
-          <i className="bi bi-building me-2" aria-hidden />
+        <span
+          className="app-brand d-inline-flex align-items-center gap-2"
+          onClick={() => navigate("/")}
+        >
+          <i className="bi bi-building" aria-hidden />
           Property Manager
         </span>
         <div className="d-flex align-items-center gap-2">
@@ -73,8 +76,7 @@ export function Navbar() {
             className="btn btn-sm btn-outline-danger"
             onClick={handleLogout}
           >
-            <i className="bi bi-box-arrow-right me-1" aria-hidden />
-            Logout
+            <i className="bi bi-box-arrow-right" aria-hidden /> Logout
           </button>
         </div>
       </div>

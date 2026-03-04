@@ -90,13 +90,12 @@ export function Dashboard() {
   return (
     <div className="container py-4 page page-dashboard">
       <div className="d-flex justify-content-between align-items-center mb-4 page-header">
-        <h2>
-          <i className="bi bi-building me-2" aria-hidden />
+        <h2 className="d-inline-flex align-items-center gap-2">
+          <i className="bi bi-building" aria-hidden />
           Properties
         </h2>
         <button className="btn btn-primary btn-glow" onClick={openCreate}>
-          <i className="bi bi-plus-lg me-1" aria-hidden />
-          Add Property
+          <i className="bi bi-plus-lg" aria-hidden /> Add Property
         </button>
       </div>
 
@@ -107,12 +106,15 @@ export function Dashboard() {
           <div key={p.id} className="col-md-6 col-lg-4">
             <div className="card h-100 app-card">
               <div className="card-body">
-                <h5 className="card-title">
-                  <i className="bi bi-house-door me-1 text-muted" aria-hidden />
+                <h5 className="card-title d-inline-flex align-items-center gap-1">
+                  <i
+                    className="bi bi-house-door text-muted"
+                    aria-hidden
+                  />
                   {p.houseNumber} — {p.address}
                 </h5>
-                <p className="card-text text-muted small">
-                  <i className="bi bi-arrows-angle-expand me-1" aria-hidden />
+                <p className="card-text text-muted small d-inline-flex align-items-center gap-1">
+                  <i className="bi bi-arrows-angle-expand" aria-hidden />
                   {p.size} sq ft
                 </p>
                 <div className="d-flex gap-2 mt-3">
@@ -120,22 +122,19 @@ export function Dashboard() {
                     className="btn btn-sm btn-primary"
                     onClick={() => navigate(`/properties/${p.id}`)}
                   >
-                    <i className="bi bi-eye me-1" aria-hidden />
-                    View
+                    <i className="bi bi-eye" aria-hidden /> View
                   </button>
                   <button
                     className="btn btn-sm btn-outline-secondary"
                     onClick={() => openEdit(p)}
                   >
-                    <i className="bi bi-pencil me-1" aria-hidden />
-                    Edit
+                    <i className="bi bi-pencil" aria-hidden /> Edit
                   </button>
                   <button
                     className="btn btn-sm btn-outline-danger"
                     onClick={() => handleDelete(p.id)}
                   >
-                    <i className="bi bi-trash me-1" aria-hidden />
-                    Delete
+                    <i className="bi bi-trash" aria-hidden /> Delete
                   </button>
                 </div>
               </div>
@@ -153,8 +152,11 @@ export function Dashboard() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">
-                  <i className={`bi ${editing ? "bi-pencil" : "bi-plus-lg"} me-2`} aria-hidden />
+                <h5 className="modal-title d-inline-flex align-items-center gap-2">
+                  <i
+                    className={`bi ${editing ? "bi-pencil" : "bi-plus-lg"}`}
+                    aria-hidden
+                  />
                   {editing ? "Edit Property" : "Add Property"}
                 </h5>
                 <button

@@ -105,6 +105,7 @@ public class TenantsDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(o => o.RentPayments)
                 .HasForeignKey(x => x.TenantOccupancyId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.AmountPaid).HasPrecision(18, 2);
         });
 
         modelBuilder.Entity<RentIncreaseRule>(e =>

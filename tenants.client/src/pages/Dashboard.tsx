@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useNotifications } from "../context/NotificationContext";
-import type { Property } from "../types";
+import type { Property, BillSummary } from "../types";
 
 export function Dashboard() {
   const { confirm } = useNotifications();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [billSummaryByProperty, setBillSummaryByProperty] = useState<Record<number, BillSummary>>({});
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
@@ -20,8 +21,14 @@ export function Dashboard() {
 
   async function loadProperties() {
     try {
-      const list = await api.properties.list();
+      const [list, summary] = await Promise.all([
+        api.properties.list(),
+        api.bills.billSummary().catch(() => [] as BillSummary[]),
+      ]);
       setProperties(list);
+      setBillSummaryByProperty(
+        Object.fromEntries((summary as BillSummary[]).map((s) => [s.propertyId, s]))
+      );
     } catch {
       setError("Failed to load properties");
     } finally {
@@ -117,6 +124,28 @@ export function Dashboard() {
                   <i className="bi bi-arrows-angle-expand" aria-hidden />
                   {p.size} sq ft
                 </p>
+                {(() => {
+                  const summary = billSummaryByProperty[p.id];
+                  if (summary && summary.totalCount > 0) {
+                    return (
+                      <div className="mb-2">
+                        {summary.unpaidCount > 0 ? (
+                          <span className="badge bg-danger">
+                            <i className="bi bi-exclamation-circle" aria-hidden />{" "}
+                            {summary.unpaidCount} unpaid bill
+                            {summary.unpaidCount !== 1 ? "s" : ""}
+                          </span>
+                        ) : (
+                          <span className="badge bg-success">
+                            <i className="bi bi-check-circle" aria-hidden /> All
+                            paid
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 <div className="d-flex gap-2 mt-3">
                   <button
                     className="btn btn-sm btn-primary"

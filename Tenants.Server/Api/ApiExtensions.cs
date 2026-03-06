@@ -10,6 +10,7 @@ public static class ApiExtensions
         routes.MapTenantEndpoints();
         routes.MapOccupancyEndpoints();
         routes.MapBillsApi();
+        routes.MapUtilityConnectionsApi();
         routes.MapRentApi();
     }
 }

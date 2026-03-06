@@ -9,6 +9,7 @@ import type {
   Bill,
   RentPayment,
   RentIncreaseRule,
+  UtilityConnection,
 } from "../types";
 
 function monthLabel(month: number, year?: number) {
@@ -82,6 +83,20 @@ export function PropertyDetail() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [billYear, setBillYear] = useState(new Date().getFullYear());
   const [billMonth, setBillMonth] = useState<number | "">("");
+  const [utilityConnections, setUtilityConnections] = useState<
+    UtilityConnection[]
+  >([]);
+  const [utilityModal, setUtilityModal] = useState(false);
+  const [editingUtility, setEditingUtility] = useState<UtilityConnection | null>(
+    null
+  );
+  const [utilityForm, setUtilityForm] = useState({
+    floorId: null as number | null,
+    type: "Electricity" as string,
+    referenceNumber: "",
+    consumerNumber: "",
+    providerName: "",
+  });
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -135,12 +150,16 @@ export function PropertyDetail() {
       setRentIncreaseByOccupancy(increases);
 
       try {
-        const billList = await api.bills.list(
-          propertyId,
-          billYear,
-          billMonth === "" ? undefined : (billMonth as number)
-        );
+        const [billList, connList] = await Promise.all([
+          api.bills.list(
+            propertyId,
+            billYear,
+            billMonth === "" ? undefined : (billMonth as number)
+          ),
+          api.utilityConnections.listByProperty(propertyId).catch(() => []),
+        ]);
         setBills(billList);
+        setUtilityConnections(connList);
       } catch {
         /* ignore */
       }
@@ -416,7 +435,7 @@ export function PropertyDetail() {
 
   if (loading || !property) {
     return (
-      <div className="container py-5">
+      <div className="container-fluid py-5 page-property-detail">
         <p className="text-muted">
           {loading ? "Loading..." : "Property not found"}
         </p>
@@ -425,78 +444,173 @@ export function PropertyDetail() {
   }
 
   return (
-    <div className="container py-4 page page-property-detail">
+    <div className="container-fluid py-4 page page-property-detail">
       {/* Header */}
       <button
-        className="btn btn-link text-decoration-none p-0 mb-2"
+        className="btn btn-back mb-3"
         onClick={() => navigate("/")}
       >
         <i className="bi bi-arrow-left" aria-hidden /> Back
       </button>
-      <div className="mb-4">
+      <div className="property-header mb-4">
         <h2 className="d-inline-flex align-items-center gap-2">
           <i className="bi bi-building" aria-hidden />
           {property.houseNumber} — {property.address}
         </h2>
-        <p className="text-muted mb-0 d-inline-flex align-items-center gap-1">
+        <span className="property-size d-inline-flex align-items-center gap-1">
           <i className="bi bi-arrows-angle-expand" aria-hidden />
           Size: {property.size} sq ft
-        </p>
+        </span>
       </div>
 
-      {/* ── Floors Section ── */}
-      <section className="mb-5">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="mb-0 section-heading">
-            <i className="bi bi-layers" aria-hidden /> Floors
-          </h5>
-          <button className="btn btn-sm btn-primary" onClick={openFloorCreate}>
-            <i className="bi bi-plus-lg" aria-hidden /> Add Floor
-          </button>
-        </div>
-        {floors.length > 0 ? (
-          <table className="table table-striped app-table">
-            <thead>
-              <tr>
-                <th>Floor #</th>
-                <th>Label</th>
-                <th>Tenants</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {floors.map((f) => (
-                <tr key={f.id}>
-                  <td>{f.floorNumber}</td>
-                  <td>{f.label || "—"}</td>
-                  <td>{(occupanciesByFloor[f.id] ?? []).length}</td>
-                  <td>
-                    <div className="d-flex gap-1 justify-content-end">
-                      <button
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => openFloorEdit(f)}
-                      >
-                        <i className="bi bi-pencil" aria-hidden /> Edit
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => handleFloorDelete(f.id)}
-                      >
-                        <i className="bi bi-trash" aria-hidden /> Delete
-                      </button>
-                    </div>
-                  </td>
+      {/* ── Floors + Utility Connections (side by side) ── */}
+      <div className="detail-grid mb-4">
+        <section>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="mb-0 section-heading">
+              <i className="bi bi-layers" aria-hidden /> Floors
+            </h5>
+            <button className="btn btn-sm btn-primary" onClick={openFloorCreate}>
+              <i className="bi bi-plus-lg" aria-hidden /> Add Floor
+            </button>
+          </div>
+          {floors.length > 0 ? (
+            <table className="table table-striped app-table">
+              <thead>
+                <tr>
+                  <th>Floor #</th>
+                  <th>Label</th>
+                  <th>Tenants</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-muted">No floors yet. Add one to get started.</p>
-        )}
-      </section>
+              </thead>
+              <tbody>
+                {floors.map((f) => (
+                  <tr key={f.id}>
+                    <td>{f.floorNumber}</td>
+                    <td>{f.label || "—"}</td>
+                    <td>{(occupanciesByFloor[f.id] ?? []).length}</td>
+                    <td>
+                      <div className="d-flex gap-1 justify-content-end">
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => openFloorEdit(f)}
+                        >
+                          <i className="bi bi-pencil" aria-hidden /> Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleFloorDelete(f.id)}
+                        >
+                          <i className="bi bi-trash" aria-hidden /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-muted">No floors yet. Add one to get started.</p>
+          )}
+        </section>
+
+        {/* ── Utility Connections (right column) ── */}
+        <section>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="mb-0 section-heading">
+              <i className="bi bi-plug" aria-hidden /> Utility Connections
+            </h5>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => {
+                setEditingUtility(null);
+                setUtilityForm({
+                  floorId: null,
+                  type: "Electricity",
+                  referenceNumber: "",
+                  consumerNumber: "",
+                  providerName: "",
+                });
+                setUtilityModal(true);
+              }}
+            >
+              <i className="bi bi-plus-lg" aria-hidden /> Add Connection
+            </button>
+          </div>
+          {utilityConnections.length > 0 ? (
+            <table className="table table-striped app-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Provider</th>
+                  <th>Reference / Consumer #</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {utilityConnections.map((uc) => (
+                  <tr key={uc.id}>
+                    <td>{uc.type}</td>
+                    <td>{uc.providerName || "—"}</td>
+                    <td>
+                      {uc.referenceNumber || uc.consumerNumber || "—"}
+                    </td>
+                    <td>
+                      <div className="d-flex gap-1 justify-content-end">
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => {
+                            setEditingUtility(uc);
+                            setUtilityForm({
+                              floorId: uc.floorId,
+                              type: uc.type,
+                              referenceNumber: uc.referenceNumber || "",
+                              consumerNumber: uc.consumerNumber || "",
+                              providerName: uc.providerName || "",
+                            });
+                            setUtilityModal(true);
+                          }}
+                        >
+                          <i className="bi bi-pencil" aria-hidden /> Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              message: "Delete this utility connection?",
+                              confirmLabel: "Delete",
+                              variant: "danger",
+                            });
+                            if (!ok) return;
+                            try {
+                              await api.utilityConnections.delete(uc.id);
+                              loadData();
+                            } catch (e) {
+                              console.error(e);
+                              toast({ message: "Failed to delete", type: "error" });
+                            }
+                          }}
+                        >
+                          <i className="bi bi-trash" aria-hidden /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-muted">
+              No utility connections. Add electricity (LESCO) or gas (SNGPL)
+              connections to enable bill scraping.
+            </p>
+          )}
+        </section>
+      </div>
 
       {/* ── Tenants by Floor ── */}
-      <section className="mb-5">
+      <section className="mb-4">
         <h5 className="mb-3 section-heading">
           <i className="bi bi-people" aria-hidden /> Tenants & Rent
         </h5>
@@ -838,6 +952,21 @@ export function PropertyDetail() {
           >
             <i className="bi bi-arrow-clockwise" aria-hidden /> Refresh
           </button>
+          <button
+            className="btn btn-sm btn-outline-primary"
+            onClick={async () => {
+              try {
+                await api.bills.scrapeNow();
+                toast({ message: "Scrape started", type: "success" });
+                loadData();
+              } catch (e) {
+                console.error(e);
+                toast({ message: "Scrape failed", type: "error" });
+              }
+            }}
+          >
+            <i className="bi bi-cloud-download" aria-hidden /> Scrape Now
+          </button>
         </div>
         {bills.length > 0 ? (
           <table className="table table-striped app-table">
@@ -846,8 +975,11 @@ export function PropertyDetail() {
                 <th>Type</th>
                 <th>Month</th>
                 <th>Amount</th>
+                <th>Due Date</th>
+                <th>Units</th>
                 <th>Status</th>
                 <th>Scope</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -856,6 +988,12 @@ export function PropertyDetail() {
                   <td>{b.type}</td>
                   <td>{monthLabel(b.month, b.year)}</td>
                   <td>Rs. {b.amount.toLocaleString()}</td>
+                  <td>
+                    {b.dueDate
+                      ? new Date(b.dueDate).toLocaleDateString()
+                      : "—"}
+                  </td>
+                  <td>{b.unitsConsumed != null ? b.unitsConsumed : "—"}</td>
                   <td>
                     <span
                       className={`badge ${b.isPaid ? "bg-success" : "bg-secondary"}`}
@@ -867,7 +1005,48 @@ export function PropertyDetail() {
                       {b.isPaid ? "Paid" : "Unpaid"}
                     </span>
                   </td>
-                  <td>{b.tenantId != null ? "Tenant" : "House"}</td>
+                  <td>{b.tenantOccupancyId != null ? "Tenant" : "House"}</td>
+                  <td>
+                    <div className="d-flex gap-1">
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        onClick={async () => {
+                          try {
+                            await api.bills.markPaid(b.id);
+                            loadBills();
+                            toast({
+                              message: b.isPaid ? "Marked as unpaid" : "Marked as paid",
+                              type: "success",
+                            });
+                          } catch (e) {
+                            console.error(e);
+                            toast({ message: "Failed to update", type: "error" });
+                          }
+                        }}
+                      >
+                        <i
+                          className={`bi ${b.isPaid ? "bi-x-circle" : "bi-check-circle"}`}
+                          aria-hidden
+                        />{" "}
+                        {b.isPaid ? "Unpaid" : "Paid"}
+                      </button>
+                      {b.hasSnapshot && (
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={async () => {
+                            try {
+                              await api.bills.openSnapshot(b.id);
+                            } catch (e) {
+                              toast({ message: "Failed to load bill", type: "error" });
+                            }
+                          }}
+                        >
+                          <i className="bi bi-file-earmark-text" aria-hidden />{" "}
+                          View
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1288,6 +1467,158 @@ export function PropertyDetail() {
                   </button>
                   <button type="submit" className="btn btn-primary">
                     Save
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Utility Connection Modal ── */}
+      {utilityModal && (
+        <div className="modal show d-block" tabIndex={-1}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title d-inline-flex align-items-center gap-2">
+                  <i className="bi bi-plug" aria-hidden />
+                  {editingUtility ? "Edit" : "Add"} Utility Connection
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setUtilityModal(false)}
+                />
+              </div>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    if (editingUtility) {
+                      await api.utilityConnections.update(editingUtility.id, {
+                        floorId: utilityForm.floorId,
+                        referenceNumber: utilityForm.referenceNumber || null,
+                        consumerNumber: utilityForm.consumerNumber || null,
+                        providerName: utilityForm.providerName || null,
+                      });
+                    } else {
+                      await api.utilityConnections.create(propertyId, {
+                        floorId: utilityForm.floorId,
+                        type: utilityForm.type,
+                        referenceNumber: utilityForm.referenceNumber || null,
+                        consumerNumber: utilityForm.consumerNumber || null,
+                        providerName: utilityForm.providerName || null,
+                      });
+                    }
+                    setUtilityModal(false);
+                    loadData();
+                    toast({ message: "Saved", type: "success" });
+                  } catch (err) {
+                    console.error(err);
+                    toast({ message: "Failed to save", type: "error" });
+                  }
+                }}
+              >
+                <div className="modal-body">
+                  <div className="mb-2">
+                    <label className="form-label">Type</label>
+                    <select
+                      className="form-select"
+                      value={utilityForm.type}
+                      onChange={(e) =>
+                        setUtilityForm((f) => ({ ...f, type: e.target.value }))
+                      }
+                      disabled={!!editingUtility}
+                    >
+                      <option value="Electricity">Electricity (LESCO)</option>
+                      <option value="Gas">Gas (SNGPL)</option>
+                    </select>
+                  </div>
+                  <div className="mb-2">
+                    <label className="form-label">Floor</label>
+                    <select
+                      className="form-select"
+                      value={utilityForm.floorId ?? ""}
+                      onChange={(e) =>
+                        setUtilityForm((f) => ({
+                          ...f,
+                          floorId: e.target.value ? parseInt(e.target.value) : null,
+                        }))
+                      }
+                    >
+                      <option value="">Whole property</option>
+                      {floors.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          Floor {f.floorNumber} {f.label ? `(${f.label})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {utilityForm.type === "Electricity" && (
+                    <div className="mb-2">
+                      <label className="form-label">
+                        Reference Number (14-digit, LESCO)
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="e.g. 12112181887022"
+                        value={utilityForm.referenceNumber}
+                        onChange={(e) =>
+                          setUtilityForm((f) => ({
+                            ...f,
+                            referenceNumber: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
+                  {utilityForm.type === "Gas" && (
+                    <div className="mb-2">
+                      <label className="form-label">
+                        Consumer Number (11-digit, SNGPL)
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="e.g. 53467826375"
+                        value={utilityForm.consumerNumber}
+                        onChange={(e) =>
+                          setUtilityForm((f) => ({
+                            ...f,
+                            consumerNumber: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className="mb-2">
+                    <label className="form-label">Provider Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. LESCO, SNGPL"
+                      value={utilityForm.providerName}
+                      onChange={(e) =>
+                        setUtilityForm((f) => ({
+                          ...f,
+                          providerName: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setUtilityModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    {editingUtility ? "Save" : "Add"}
                   </button>
                 </div>
               </form>

@@ -1,4 +1,4 @@
-import type { Property, Floor, Tenant, Occupancy, RentPayment, RentIncreaseRule, Bill } from './types';
+import type { Property, Floor, Tenant, Occupancy, RentPayment, RentIncreaseRule, Bill, UtilityConnection, BillSummary } from './types';
 
 const API = '/api';
 const TOKEN_KEY = 'authToken';
@@ -82,6 +82,32 @@ export const api = {
       const q = params.toString() ? `?${params}` : '';
       return fetchApi<Bill[]>(`/properties/${propertyId}/bills${q}`);
     },
+    markPaid: (id: number) =>
+      fetchApi<{ isPaid: boolean }>(`/bills/${id}/mark-paid`, { method: 'PUT' }),
+    billSummary: () => fetchApi<BillSummary[]>('/properties/bill-summary'),
+    snapshotUrl: (id: number) => `${API}/bills/${id}/snapshot`,
+    openSnapshot: async (id: number) => {
+      const res = await fetch(`${API}/bills/${id}/snapshot`, {
+        headers: getAuthHeaders() as HeadersInit,
+      });
+      if (!res.ok) throw new Error("Failed to load snapshot");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    },
+    scrapeNow: (type?: 'Electricity' | 'Gas') =>
+      fetchApi<void>(`/bills/scrape-now${type ? `?type=${type}` : ''}`, { method: 'POST' }),
+  },
+
+  utilityConnections: {
+    listByProperty: (propertyId: number) =>
+      fetchApi<UtilityConnection[]>(`/properties/${propertyId}/utility-connections`),
+    create: (propertyId: number, data: { floorId?: number | null; type: string; referenceNumber?: string | null; consumerNumber?: string | null; providerName?: string | null }) =>
+      fetchApi<UtilityConnection>(`/properties/${propertyId}/utility-connections`, { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: { floorId?: number | null; referenceNumber?: string | null; consumerNumber?: string | null; providerName?: string | null }) =>
+      fetchApi<UtilityConnection>(`/utility-connections/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: number) => fetchApi<void>(`/utility-connections/${id}`, { method: 'DELETE' }),
   },
 
   payments: {

@@ -258,6 +258,12 @@ namespace Tenants.Server.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("BillHtmlContent")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("FloorId")
                         .HasColumnType("int");
 
@@ -270,6 +276,9 @@ namespace Tenants.Server.Migrations
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ScrapedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("TenantOccupancyId")
                         .HasColumnType("int");
 
@@ -277,6 +286,13 @@ namespace Tenants.Server.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("UnitsConsumed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("UtilityConnectionId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Year")
                         .HasColumnType("int");
@@ -288,6 +304,8 @@ namespace Tenants.Server.Migrations
                     b.HasIndex("PropertyId");
 
                     b.HasIndex("TenantOccupancyId");
+
+                    b.HasIndex("UtilityConnectionId");
 
                     b.ToTable("MonthlyBills");
                 });
@@ -449,11 +467,23 @@ namespace Tenants.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ConsumerNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<int?>("FloorId")
                         .HasColumnType("int");
 
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ProviderName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -549,11 +579,18 @@ namespace Tenants.Server.Migrations
                         .HasForeignKey("TenantOccupancyId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Tenants.Server.Data.UtilityConnection", "UtilityConnection")
+                        .WithMany()
+                        .HasForeignKey("UtilityConnectionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Floor");
 
                     b.Navigation("Property");
 
                     b.Navigation("TenantOccupancy");
+
+                    b.Navigation("UtilityConnection");
                 });
 
             modelBuilder.Entity("Tenants.Server.Data.RentIncreaseRule", b =>

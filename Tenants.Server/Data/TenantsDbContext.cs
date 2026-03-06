@@ -77,6 +77,9 @@ public class TenantsDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(x => x.FloorId)
                 .OnDelete(DeleteBehavior.Restrict);
             e.Property(x => x.Type).HasConversion<string>().HasMaxLength(50);
+            e.Property(x => x.ReferenceNumber).HasMaxLength(50);
+            e.Property(x => x.ConsumerNumber).HasMaxLength(50);
+            e.Property(x => x.ProviderName).HasMaxLength(50);
         });
 
         modelBuilder.Entity<MonthlyBill>(e =>
@@ -94,8 +97,14 @@ public class TenantsDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(f => f.MonthlyBills)
                 .HasForeignKey(x => x.FloorId)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.UtilityConnection)
+                .WithMany()
+                .HasForeignKey(x => x.UtilityConnectionId)
+                .OnDelete(DeleteBehavior.Restrict);
             e.Property(x => x.Type).HasConversion<string>().HasMaxLength(50);
             e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.UnitsConsumed).HasPrecision(18, 2);
+            e.Property(x => x.BillHtmlContent);
         });
 
         modelBuilder.Entity<RentPayment>(e =>

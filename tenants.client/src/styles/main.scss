@@ -14,13 +14,13 @@
   --c-border: #cbd5e1;
   --c-border-light: #e2e8f0;
 
-  --c-primary: #6366f1;
-  --c-primary-hover: #4f46e5;
-  --c-primary-subtle: rgba(99, 102, 241, 0.10);
-  --c-primary-glow: rgba(99, 102, 241, 0.25);
+  --c-primary: #2563eb;
+  --c-primary-hover: #1d4ed8;
+  --c-primary-subtle: rgba(37, 99, 235, 0.10);
+  --c-primary-glow: rgba(37, 99, 235, 0.25);
 
-  --c-success: #10b981;
-  --c-success-subtle: rgba(16, 185, 129, 0.12);
+  --c-success: #059669;
+  --c-success-subtle: rgba(5, 150, 105, 0.12);
   --c-danger: #ef4444;
   --c-danger-subtle: rgba(239, 68, 68, 0.10);
   --c-warning: #f59e0b;
@@ -54,13 +54,13 @@
   --c-border: #1e293b;
   --c-border-light: #334155;
 
-  --c-primary: #818cf8;
-  --c-primary-hover: #a5b4fc;
-  --c-primary-subtle: rgba(129, 140, 248, 0.14);
-  --c-primary-glow: rgba(129, 140, 248, 0.20);
+  --c-primary: #60a5fa;
+  --c-primary-hover: #93c5fd;
+  --c-primary-subtle: rgba(96, 165, 250, 0.14);
+  --c-primary-glow: rgba(96, 165, 250, 0.20);
 
-  --c-success: #34d399;
-  --c-success-subtle: rgba(52, 211, 153, 0.14);
+  --c-success: #10b981;
+  --c-success-subtle: rgba(16, 185, 129, 0.14);
   --c-danger: #fb7185;
   --c-danger-subtle: rgba(251, 113, 133, 0.14);
   --c-warning: #fbbf24;
@@ -427,6 +427,27 @@ a {
   }
 }
 
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--c-text-secondary) !important;
+  background: var(--c-bg-elevated) !important;
+  border: 1px solid var(--c-border) !important;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    color: var(--c-primary) !important;
+    border-color: var(--c-primary) !important;
+    background: var(--c-primary-subtle) !important;
+  }
+}
+
 /* ───────────────────────────────────────────────────────────
    FORM CONTROLS  –  Labels, inputs, selects
    ─────────────────────────────────────────────────────────── */
@@ -654,13 +675,13 @@ input[type="date"] {
 }
 
 .bg-success {
-  background-color: var(--c-success) !important;
-  color: #fff !important;
+  background-color: var(--c-success-subtle) !important;
+  color: var(--c-success) !important;
 }
 
 .bg-secondary {
-  background-color: var(--c-text-tertiary) !important;
-  color: #fff !important;
+  background-color: var(--c-bg-subtle) !important;
+  color: var(--c-text-secondary) !important;
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -810,6 +831,18 @@ dd {
   }
 }
 
+.btn-outline-success {
+  background: transparent !important;
+  color: var(--c-success) !important;
+  border: 1px solid var(--c-success) !important;
+
+  &:hover,
+  &:focus {
+    background: var(--c-success) !important;
+    color: #fff !important;
+  }
+}
+
 /* ───────────────────────────────────────────────────────────
    TOAST NOTIFICATIONS
    ─────────────────────────────────────────────────────────── */
@@ -887,5 +920,43 @@ dd {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* ───────────────────────────────────────────────────────────
+   PROPERTY DETAIL PAGE  –  Wider layout, side-by-side sections
+   ─────────────────────────────────────────────────────────── */
+.page-property-detail {
+  max-width: 1400px !important;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.property-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h2 {
+    margin-bottom: 0;
+  }
+
+  .property-size {
+    font-size: 0.875rem;
+    color: var(--c-text-tertiary);
+    padding-left: 0.75rem;
+    border-left: 2px solid var(--c-border);
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+
+  @media (max-width: 991px) {
+    grid-template-columns: 1fr;
   }
 }

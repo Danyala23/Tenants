@@ -7,6 +7,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Tenants.Server.Api;
 using Tenants.Server.Data;
+using Tenants.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddDbContext<TenantsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString(builder.Configuration["ActiveConnection"] ?? "DefaultConnection")));
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
     options.Password.RequireDigit = true;
@@ -54,6 +55,13 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
     });
 });
+
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<PythonScriptRunner>();
+builder.Services.AddSingleton<IBillScraper, LescoBillScraper>();
+builder.Services.AddSingleton<IBillScraper, SngplBillScraper>();
+builder.Services.AddScoped<BillScraperService>();
+builder.Services.AddHostedService<BillScraperBackgroundService>();
 
 var app = builder.Build();
 

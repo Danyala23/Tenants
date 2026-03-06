@@ -28,8 +28,13 @@ public static class Extensions
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
-            // Turn on resilience by default
-            http.AddStandardResilienceHandler();
+            // Turn on resilience by default (120s timeout for slow external APIs like bill.pitc.com.pk)
+            http.AddStandardResilienceHandler(options =>
+            {
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(120);
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(120); // Per-attempt (default 10s is too short for PITC)
+                options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(300); // Must be >= 2x AttemptTimeout (240s)
+            });
 
             // Turn on service discovery by default
             http.AddServiceDiscovery();

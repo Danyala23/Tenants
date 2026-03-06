@@ -52,7 +52,7 @@ export interface RentIncreaseRule {
 
 export interface Bill {
   id: number;
-  tenantId: number | null;
+  tenantOccupancyId: number | null;
   propertyId: number;
   floorId: number | null;
   type: string;
@@ -60,4 +60,24 @@ export interface Bill {
   month: number;
   amount: number;
   isPaid: boolean;
+  dueDate: string | null;
+  unitsConsumed: number | null;
+  scrapedAt: string | null;
+  hasSnapshot: boolean;
+}
+
+export interface UtilityConnection {
+  id: number;
+  propertyId: number;
+  floorId: number | null;
+  type: string;
+  referenceNumber: string | null;
+  consumerNumber: string | null;
+  providerName: string | null;
+}
+
+export interface BillSummary {
+  propertyId: number;
+  unpaidCount: number;
+  totalCount: number;
 }

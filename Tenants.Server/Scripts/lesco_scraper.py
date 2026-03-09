@@ -192,6 +192,17 @@ def parse_units(soup: BeautifulSoup) -> float | None:
     return None
 
 
+def strip_base64_images(html: str) -> str:
+    """Replace inline base64 images with a tiny placeholder to reduce size.
+    LESCO bills contain large QR codes and meter images (100KB-500KB each) that cause
+    process pipe overflow and DB bloat. The placeholder preserves img tags for layout."""
+    return re.sub(
+        r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+",
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        html,
+    )
+
+
 def parse_billing_period(soup: BeautifulSoup) -> tuple[int, int]:
     now = datetime.now()
     text = soup.get_text(separator=" ", strip=True)
@@ -312,6 +323,9 @@ def main() -> None:
     due_date = parse_due_date(soup)
     units = parse_units(soup)
     year, month = parse_billing_period(soup)
+
+    # Strip base64 images before JSON output to avoid pipe/DB size limits
+    html = strip_base64_images(html)
 
     result = {
         "amount": amount,

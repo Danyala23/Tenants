@@ -86,6 +86,13 @@ export const api = {
       fetchApi<{ isPaid: boolean }>(`/bills/${id}/mark-paid`, { method: 'PUT' }),
     billSummary: () => fetchApi<BillSummary[]>('/properties/bill-summary'),
     snapshotUrl: (id: number) => `${API}/bills/${id}/snapshot`,
+    getSnapshotHtml: async (id: number) => {
+      const res = await fetch(`${API}/bills/${id}/snapshot`, {
+        headers: getAuthHeaders() as HeadersInit,
+      });
+      if (!res.ok) throw new Error("Failed to load snapshot");
+      return res.text();
+    },
     openSnapshot: async (id: number) => {
       const res = await fetch(`${API}/bills/${id}/snapshot`, {
         headers: getAuthHeaders() as HeadersInit,

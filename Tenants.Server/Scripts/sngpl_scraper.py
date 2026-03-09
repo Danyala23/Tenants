@@ -33,6 +33,15 @@ def solve_captcha(image_bytes: bytes) -> str:
     return _ocr.classification(image_bytes)
 
 
+def strip_base64_images(html: str) -> str:
+    """Replace inline base64 images with a tiny placeholder to reduce size."""
+    return re.sub(
+        r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+",
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        html,
+    )
+
+
 def parse_amount(soup: BeautifulSoup) -> float:
     text = soup.get_text(separator=" ", strip=True)
     NUM = r"(\d[\d,]*(?:\.\d{1,2})?)"
@@ -212,6 +221,8 @@ def try_scrape(consumer_no: str) -> dict | None:
     due_date = parse_due_date(soup)
     units = parse_units(soup)
     year, month = parse_billing_period(soup)
+
+    html = strip_base64_images(html)
 
     return {
         "amount": amount,

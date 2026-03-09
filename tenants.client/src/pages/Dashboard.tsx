@@ -113,16 +113,16 @@ export function Dashboard() {
           <div key={p.id} className="col-md-6 col-lg-4">
             <div className="card h-100 app-card">
               <div className="card-body">
-                <h5 className="card-title d-inline-flex align-items-center gap-1">
+                <h5 className="card-title d-inline-flex align-items-center gap-1 mb-1">
                   <i
                     className="bi bi-house-door text-muted"
                     aria-hidden
                   />
                   {p.houseNumber} — {p.address}
                 </h5>
-                <p className="card-text text-muted small d-inline-flex align-items-center gap-1">
+                <p className="card-text text-muted small d-inline-flex align-items-center gap-1 mb-2">
                   <i className="bi bi-arrows-angle-expand" aria-hidden />
-                  {p.size} sq ft
+                  {p.size} Marla{p.size !== 1 ? "s" : ""}
                 </p>
                 {(() => {
                   const summary = billSummaryByProperty[p.id];
@@ -224,7 +224,7 @@ export function Dashboard() {
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Size (sq ft)</label>
+                    <label className="form-label">Size (Marlas)</label>
                     <input
                       type="number"
                       step="0.01"

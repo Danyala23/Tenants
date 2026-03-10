@@ -1,4 +1,4 @@
-import { getPreviousMonth } from "../../utils/dateUtils";
+import { computeDues } from "../../utils/dateUtils";
 import type { Floor, Occupancy, RentPayment, RentIncreaseRule } from "../../types";
 import { TenantCard } from "./TenantCard";
 
@@ -12,8 +12,8 @@ interface TenantsByFloorSectionProps {
   currentMonth: number;
   onAddTenant: (floorId: number) => void;
   onEditOccupancy: (occ: Occupancy) => void;
-  onRemoveOccupancy: (occ: Occupancy) => void;
-  onCollect: (occId: number, rent: number) => void;
+  onVacateOccupancy: (occ: Occupancy) => void;
+  onCollect: (occ: Occupancy) => void;
   onToggleHistory: (occId: number) => void;
   onAdjustIncrease: (occId: number) => void;
 }
@@ -28,7 +28,7 @@ export function TenantsByFloorSection({
   currentMonth,
   onAddTenant,
   onEditOccupancy,
-  onRemoveOccupancy,
+  onVacateOccupancy,
   onCollect,
   onToggleHistory,
   onAdjustIncrease,
@@ -43,12 +43,9 @@ export function TenantsByFloorSection({
     );
   }
 
-  function getDues(occId: number, rent: number): number {
-    const prev = getPreviousMonth(currentYear, currentMonth);
-    const prevPayment = getPayment(occId, prev.year, prev.month);
-    if (!prevPayment) return 0;
-    const shortfall = rent - prevPayment.amountPaid;
-    return shortfall > 0 ? shortfall : 0;
+  function getDues(occ: Occupancy): number {
+    const payments = paymentsByOccupancy[occ.id] ?? [];
+    return computeDues(occ.rent, payments, occ.startDate, currentYear, currentMonth);
   }
 
   const now = new Date();
@@ -73,12 +70,14 @@ export function TenantsByFloorSection({
                 Floor {f.floorNumber}
                 {f.label ? ` — ${f.label}` : ""}
               </h6>
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={() => onAddTenant(f.id)}
-              >
-                <i className="bi bi-person-plus" aria-hidden /> Add Tenant
-              </button>
+              {occs.length === 0 && (
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={() => onAddTenant(f.id)}
+                >
+                  <i className="bi bi-person-plus" aria-hidden /> Add Tenant
+                </button>
+              )}
             </div>
 
             {occs.length > 0 ? (
@@ -87,7 +86,7 @@ export function TenantsByFloorSection({
                 const rentIncrease = rentIncreaseByOccupancy[occ.id];
                 const payments = paymentsByOccupancy[occ.id] ?? [];
                 const isExpanded = expandedHistory.has(occ.id);
-                const dues = getDues(occ.id, occ.rent);
+                const dues = getDues(occ);
                 const totalDue = occ.rent + dues;
 
                 const isPendingIncrease =
@@ -116,7 +115,7 @@ export function TenantsByFloorSection({
                     totalDue={totalDue}
                     isPendingIncrease={!!isPendingIncrease}
                     onEdit={onEditOccupancy}
-                    onRemove={onRemoveOccupancy}
+                    onVacate={onVacateOccupancy}
                     onCollect={onCollect}
                     onToggleHistory={onToggleHistory}
                     onAdjustIncrease={onAdjustIncrease}

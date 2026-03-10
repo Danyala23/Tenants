@@ -103,6 +103,7 @@ export const api = {
       data: { floorId?: number | null; rent?: number; securityDeposit?: number; startDate?: string }
     ) =>
       fetchApi<Occupancy>(`/occupancies/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    vacate: (id: number) => fetchApi<Occupancy>(`/occupancies/${id}/vacate`, { method: 'PUT' }),
     delete: (id: number) => fetchApi<void>(`/occupancies/${id}`, { method: 'DELETE' }),
   },
 
@@ -165,7 +166,7 @@ export const api = {
   payments: {
     listByOccupancy: (occupancyId: number) =>
       fetchApi<RentPayment[]>(`/occupancies/${occupancyId}/payments`),
-    collect: (occupancyId: number, data: { year: number; month: number; amountPaid: number }) =>
+    collect: (occupancyId: number, data: { year: number; month: number; amountPaid: number; collectedAt?: string }) =>
       fetchApi<RentPayment>(`/occupancies/${occupancyId}/payments/collect`, {
         method: 'PUT',
         body: JSON.stringify(data),

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Dialog, TextInput, Button, SegmentedButtons } from 'react-native-paper';
+import { Dialog, TextInput, Button, SegmentedButtons, Text } from 'react-native-paper';
 import type { Floor, UtilityConnection } from '../types';
 
 interface UtilityForm {
@@ -64,15 +64,25 @@ export default function UtilityModal({
         {editingUtility ? 'Edit' : 'Add'} Utility Connection
       </Dialog.Title>
       <Dialog.Content>
-        <SegmentedButtons
-          value={type}
-          onValueChange={setType}
-          buttons={[
-            { value: 'Electricity', label: 'Electricity' },
-            { value: 'Gas', label: 'Gas' },
-          ]}
-          style={styles.segmented}
-        />
+        {editingUtility ? (
+          <View style={styles.typeReadOnly}>
+            <Text variant="bodyLarge" style={styles.typeLabel}>Type</Text>
+            <Text variant="titleMedium">{editingUtility.type}</Text>
+            <Text variant="bodySmall" style={styles.typeHint}>
+              Type cannot be changed when editing
+            </Text>
+          </View>
+        ) : (
+          <SegmentedButtons
+            value={type}
+            onValueChange={setType}
+            buttons={[
+              { value: 'Electricity', label: 'Electricity' },
+              { value: 'Gas', label: 'Gas' },
+            ]}
+            style={styles.segmented}
+          />
+        )}
         <View style={styles.pickerRow}>
           {floors.map((f) => (
             <Button
@@ -133,6 +143,18 @@ export default function UtilityModal({
 
 const styles = StyleSheet.create({
   segmented: { marginBottom: 12 },
+  typeReadOnly: {
+    marginBottom: 12,
+    paddingVertical: 8,
+  },
+  typeLabel: {
+    opacity: 0.7,
+    marginBottom: 4,
+  },
+  typeHint: {
+    opacity: 0.6,
+    marginTop: 4,
+  },
   input: { marginBottom: 12 },
   pickerRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   pickerBtn: { marginRight: 8, marginBottom: 8 },

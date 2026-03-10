@@ -8,6 +8,7 @@ public class RentPayment
     public int Month { get; set; }
     public bool IsPaid { get; set; }
     public decimal AmountPaid { get; set; }
+    public DateTime? CollectedAt { get; set; }
 
     public TenantOccupancy TenantOccupancy { get; set; } = null!;
 }

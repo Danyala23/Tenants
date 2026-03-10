@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { List, TextInput, Button, Text, Switch, Divider } from 'react-native-paper';
+import { TextInput, Button, Text, Switch, useTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { useThemeMode } from '../../src/context/ThemeContext';
 import { getServerUrl, setServerUrl, normalizeServerUrl } from '../../src/config';
+import { Colors, Spacing, Radius } from '../../src/theme';
 
 export default function SettingsScreen() {
   const [serverUrl, setServerUrlLocal] = useState('');
   const [saved, setSaved] = useState(false);
   const { logout } = useAuth();
-  const { theme, toggleTheme } = useThemeMode();
+  const { theme: themeMode, toggleTheme } = useThemeMode();
+  const theme = useTheme();
   const router = useRouter();
+  const isDark = themeMode === 'dark';
 
   useEffect(() => {
     getServerUrl().then(setServerUrlLocal);
@@ -31,40 +35,130 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <List.Section>
-        <List.Subheader>Server</List.Subheader>
-        <TextInput
-          label="Server URL"
-          value={serverUrl}
-          onChangeText={setServerUrlLocal}
-          placeholder="https://your-server.com"
-          mode="outlined"
-          style={styles.input}
-        />
-        <Button mode="contained" onPress={handleSaveUrl} style={styles.button}>
-          {saved ? 'Saved!' : 'Save Server URL'}
-        </Button>
-      </List.Section>
-      <Divider />
-      <List.Section>
-        <List.Subheader>Appearance</List.Subheader>
-        <List.Item
-          title="Dark mode"
-          right={() => (
-            <Switch value={theme === 'dark'} onValueChange={toggleTheme} />
-          )}
-        />
-      </List.Section>
-      <Divider />
-      <List.Section>
-        <List.Subheader>Account</List.Subheader>
-        <Button mode="outlined" onPress={handleLogout} style={styles.button}>
-          Log Out
-        </Button>
-      </List.Section>
+    <ScrollView
+      style={{ backgroundColor: theme.colors.background }}
+      contentContainerStyle={styles.container}
+    >
+      {/* Server Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="server-network"
+            size={18}
+            color={theme.colors.primary}
+          />
+          <Text
+            variant="titleSmall"
+            style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+          >
+            Server
+          </Text>
+        </View>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+          <TextInput
+            label="Server URL"
+            value={serverUrl}
+            onChangeText={setServerUrlLocal}
+            placeholder="https://your-server.com"
+            mode="outlined"
+            style={styles.input}
+            outlineStyle={styles.inputOutline}
+            left={<TextInput.Icon icon="link-variant" />}
+          />
+          <Button
+            mode="contained"
+            onPress={handleSaveUrl}
+            style={styles.saveBtn}
+            contentStyle={styles.saveBtnContent}
+            labelStyle={styles.saveBtnLabel}
+            icon={saved ? 'check' : undefined}
+          >
+            {saved ? 'Saved!' : 'Save Server URL'}
+          </Button>
+        </View>
+      </View>
+
+      {/* Appearance Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="palette-outline"
+            size={18}
+            color={theme.colors.primary}
+          />
+          <Text
+            variant="titleSmall"
+            style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+          >
+            Appearance
+          </Text>
+        </View>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <MaterialCommunityIcons
+                name={isDark ? 'moon-waning-crescent' : 'white-balance-sunny'}
+                size={20}
+                color={theme.colors.onSurface}
+              />
+              <View style={styles.settingText}>
+                <Text variant="bodyLarge" style={{ color: theme.colors.onSurface }}>
+                  Dark Mode
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  {isDark ? 'Currently using dark theme' : 'Currently using light theme'}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              color={Colors.primary}
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* Account Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="account-circle-outline"
+            size={18}
+            color={theme.colors.primary}
+          />
+          <Text
+            variant="titleSmall"
+            style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+          >
+            Account
+          </Text>
+        </View>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+          <Button
+            mode="outlined"
+            onPress={handleLogout}
+            style={styles.logoutBtn}
+            contentStyle={styles.logoutBtnContent}
+            textColor={Colors.error}
+            icon="logout"
+          >
+            Log Out
+          </Button>
+        </View>
+      </View>
+
+      {/* Footer */}
       <View style={styles.footer}>
-        <Text variant="bodySmall">Property Manager v1.0.0</Text>
+        <MaterialCommunityIcons
+          name="home-city"
+          size={20}
+          color={theme.colors.onSurfaceVariant}
+          style={{ opacity: 0.4 }}
+        />
+        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, opacity: 0.6, marginTop: 4 }}>
+          Property Manager v1.0.0
+        </Text>
       </View>
     </ScrollView>
   );
@@ -72,17 +166,67 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+  },
+  section: {
+    marginBottom: Spacing.xxl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+  },
+  sectionTitle: {
+    fontWeight: '600',
+  },
+  card: {
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
   },
   input: {
-    marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: Spacing.md,
   },
-  button: {
-    margin: 16,
+  inputOutline: {
+    borderRadius: Radius.sm,
+  },
+  saveBtn: {
+    borderRadius: Radius.sm,
+  },
+  saveBtnContent: {
+    height: 44,
+  },
+  saveBtnLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
+  },
+  settingText: {
+    flex: 1,
+  },
+  logoutBtn: {
+    borderRadius: Radius.sm,
+    borderColor: Colors.error,
+  },
+  logoutBtnContent: {
+    height: 44,
   },
   footer: {
-    padding: 24,
     alignItems: 'center',
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.lg,
   },
 });

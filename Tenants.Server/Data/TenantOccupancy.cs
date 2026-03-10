@@ -13,6 +13,7 @@ public class TenantOccupancy
     public decimal Rent { get; set; }
     public decimal SecurityDeposit { get; set; }
     public DateTime StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Property Property { get; set; } = null!;

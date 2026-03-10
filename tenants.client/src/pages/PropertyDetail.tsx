@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api";
 import { useNotifications } from "../context/NotificationContext";
-import { getPreviousMonth } from "../utils/dateUtils";
+import { computeDues, getUnpaidMonths } from "../utils/dateUtils";
 import type {
   Property,
   Floor,
@@ -76,8 +76,17 @@ export function PropertyDetail() {
     occId: number;
     rent: number;
     dues: number;
+    unpaidMonths: { year: number; month: number }[];
+    startDate: string;
+    payments: RentPayment[];
   } | null>(null);
   const [collectAmount, setCollectAmount] = useState(0);
+  const [collectYear, setCollectYear] = useState(() => new Date().getFullYear());
+  const [collectMonth, setCollectMonth] = useState(() => new Date().getMonth() + 1);
+  const [collectCollectedToday, setCollectCollectedToday] = useState(true);
+  const [collectCollectedAt, setCollectCollectedAt] = useState(
+    () => new Date().toISOString().slice(0, 10)
+  );
 
   const [bills, setBills] = useState<Bill[]>([]);
   const [billYear, setBillYear] = useState(new Date().getFullYear());
@@ -187,22 +196,8 @@ export function PropertyDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billYear, billMonth]);
 
-  function getPayment(
-    occId: number,
-    year: number,
-    month: number
-  ): RentPayment | undefined {
-    return (paymentsByOccupancy[occId] ?? []).find(
-      (p) => p.year === year && p.month === month
-    );
-  }
-
-  function getDues(occId: number, rent: number): number {
-    const prev = getPreviousMonth(currentYear, currentMonth);
-    const prevPayment = getPayment(occId, prev.year, prev.month);
-    if (!prevPayment) return 0;
-    const shortfall = rent - prevPayment.amountPaid;
-    return shortfall > 0 ? shortfall : 0;
+  function getDues(_occId: number, rent: number, startDate: string, payments: RentPayment[]): number {
+    return computeDues(rent, payments, startDate, currentYear, currentMonth);
   }
 
   function toggleHistory(occId: number) {
@@ -214,20 +209,36 @@ export function PropertyDetail() {
     });
   }
 
-  function openCollectModal(occId: number, rent: number) {
-    const dues = getDues(occId, rent);
-    setCollectModal({ occId, rent, dues });
-    setCollectAmount(rent + dues);
+  function openCollectModal(occ: Occupancy) {
+    const payments = paymentsByOccupancy[occ.id] ?? [];
+    const dues = getDues(occ.id, occ.rent, occ.startDate, payments);
+    const unpaidMonths = getUnpaidMonths(occ.rent, payments, occ.startDate, currentYear, currentMonth);
+    const hasDues = dues > 0;
+    const periodYear = hasDues && unpaidMonths.length > 0 ? unpaidMonths[0].year : currentYear;
+    const periodMonth = hasDues && unpaidMonths.length > 0 ? unpaidMonths[0].month : currentMonth;
+    const totalForPeriod = hasDues
+      ? occ.rent + computeDues(occ.rent, payments, occ.startDate, periodYear, periodMonth)
+      : occ.rent + dues;
+    setCollectModal({ occId: occ.id, rent: occ.rent, dues, unpaidMonths, startDate: occ.startDate, payments });
+    setCollectYear(periodYear);
+    setCollectMonth(periodMonth);
+    setCollectAmount(totalForPeriod);
+    setCollectCollectedToday(true);
+    setCollectCollectedAt(new Date().toISOString().slice(0, 10));
   }
 
   async function handleCollect(e: React.FormEvent) {
     e.preventDefault();
     if (!collectModal) return;
+    const collectedAt = collectCollectedToday
+      ? undefined
+      : `${collectCollectedAt}T00:00:00.000Z`;
     try {
       await api.payments.collect(collectModal.occId, {
-        year: currentYear,
-        month: currentMonth,
+        year: collectYear,
+        month: collectMonth,
         amountPaid: collectAmount,
+        collectedAt,
       });
       setCollectModal(null);
       toast({ message: "Rent collected successfully.", type: "success" });
@@ -379,18 +390,20 @@ export function PropertyDetail() {
     }
   }
 
-  async function handleOccupancyDelete(occ: Occupancy) {
+  async function handleVacateOccupancy(occ: Occupancy) {
     const ok = await confirm({
-      message: `Remove ${occ.tenantName} from this floor?`,
-      confirmLabel: "Remove",
-      variant: "danger",
+      message: `Vacate ${occ.tenantName} from this floor? The tenant and payment history will be preserved.`,
+      confirmLabel: "Vacate",
+      variant: "primary",
     });
     if (!ok) return;
     try {
-      await api.occupancies.delete(occ.id);
+      await api.occupancies.vacate(occ.id);
       loadData();
+      toast({ message: "Tenant vacated. Floor is now available.", type: "success" });
     } catch (error) {
       console.error(error);
+      toast({ message: "Failed to vacate tenant.", type: "error" });
     }
   }
 
@@ -514,7 +527,7 @@ export function PropertyDetail() {
         currentMonth={currentMonth}
         onAddTenant={openTenantCreate}
         onEditOccupancy={openOccupancyEdit}
-        onRemoveOccupancy={handleOccupancyDelete}
+        onVacateOccupancy={handleVacateOccupancy}
         onCollect={openCollectModal}
         onToggleHistory={toggleHistory}
         onAdjustIncrease={openIncreaseModal}
@@ -535,9 +548,22 @@ export function PropertyDetail() {
           rent={collectModal.rent}
           dues={collectModal.dues}
           amount={collectAmount}
-          currentMonth={currentMonth}
-          currentYear={currentYear}
+          selectedYear={collectYear}
+          selectedMonth={collectMonth}
+          unpaidMonths={collectModal.unpaidMonths}
+          payments={collectModal.payments}
+          startDate={collectModal.startDate}
+          collectedToday={collectCollectedToday}
+          collectedAt={collectCollectedAt}
           onAmountChange={setCollectAmount}
+          onPeriodChange={(y, m) => {
+            setCollectYear(y);
+            setCollectMonth(m);
+            const total = collectModal.rent + computeDues(collectModal.rent, collectModal.payments, collectModal.startDate, y, m);
+            setCollectAmount(total);
+          }}
+          onCollectedTodayChange={setCollectCollectedToday}
+          onCollectedAtChange={setCollectCollectedAt}
           onSubmit={handleCollect}
           onClose={() => setCollectModal(null)}
         />
@@ -560,7 +586,11 @@ export function PropertyDetail() {
       {tenantModal && (
         <TenantModal
           editingOccupancy={editingOccupancy}
-          floors={floors}
+          floors={
+            editingOccupancy
+              ? floors
+              : floors.filter((f) => (occupanciesByFloor[f.id] ?? []).length === 0)
+          }
           form={occupancyForm}
           onFormChange={setOccupancyForm}
           onToggleFloor={toggleFloorInForm}

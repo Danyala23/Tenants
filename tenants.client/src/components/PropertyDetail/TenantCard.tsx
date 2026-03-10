@@ -13,8 +13,8 @@ interface TenantCardProps {
   totalDue: number;
   isPendingIncrease: boolean;
   onEdit: (occ: Occupancy) => void;
-  onRemove: (occ: Occupancy) => void;
-  onCollect: (occId: number, rent: number) => void;
+  onVacate: (occ: Occupancy) => void;
+  onCollect: (occ: Occupancy) => void;
   onToggleHistory: (occId: number) => void;
   onAdjustIncrease: (occId: number) => void;
 }
@@ -31,7 +31,7 @@ export function TenantCard({
   totalDue,
   isPendingIncrease,
   onEdit,
-  onRemove,
+  onVacate,
   onCollect,
   onToggleHistory,
   onAdjustIncrease,
@@ -60,11 +60,11 @@ export function TenantCard({
                 <i className="bi bi-pencil" aria-hidden /> Edit Tenant
               </button>
               <button
-                className="btn btn-sm btn-outline-danger"
-                onClick={() => onRemove(occ)}
-                title="Remove tenant from this floor"
+                className="btn btn-sm btn-outline-warning"
+                onClick={() => onVacate(occ)}
+                title="Vacate tenant from this floor"
               >
-                <i className="bi bi-person-x" aria-hidden /> Remove
+                <i className="bi bi-box-arrow-right" aria-hidden /> Vacate
               </button>
             </div>
           </div>
@@ -120,7 +120,7 @@ export function TenantCard({
 
             <button
               className={`btn btn-sm ${currentPayment?.isPaid ? "btn-outline-secondary" : "btn-success"}`}
-              onClick={() => onCollect(occ.id, occ.rent)}
+              onClick={() => onCollect(occ)}
             >
               <i
                 className={`bi ${currentPayment?.isPaid ? "bi-pencil" : "bi-wallet2"}`}
@@ -134,7 +134,8 @@ export function TenantCard({
             <div className="alert alert-warning d-flex justify-content-between align-items-center py-2 mt-2 mb-0">
               <small className="d-inline-flex align-items-center gap-1">
                 <i className="bi bi-exclamation-triangle-fill" aria-hidden />
-                Rent increase pending: {rentIncrease.nextIncreaseDate.slice(0, 10)} (
+                Rent increase pending:{" "}
+                {rentIncrease.nextIncreaseDate.slice(0, 10)} (
                 {rentIncrease.increasePercent}%)
               </small>
               <button
@@ -150,8 +151,10 @@ export function TenantCard({
             <div className="d-flex align-items-center gap-2 mt-2">
               <small className="text-muted d-inline-flex align-items-center gap-1">
                 <i className="bi bi-graph-up-arrow" aria-hidden />
-                Next increase: {rentIncrease.nextIncreaseDate.slice(0, 10)} ·{" "}
-                {rentIncrease.increasePercent}%
+                Next increase: {rentIncrease.nextIncreaseDate.slice(
+                  0,
+                  10,
+                )} · {rentIncrease.increasePercent}%
               </small>
               <button
                 className="btn btn-sm btn-outline-secondary"
@@ -188,39 +191,52 @@ export function TenantCard({
                       <th>Period</th>
                       <th>Paid</th>
                       <th>Due</th>
+                      <th>Collected</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {payments.map((p) => {
-                      const shortfall = occ.rent - p.amountPaid;
-                      return (
-                        <tr key={p.id}>
-                          <td>{monthLabel(p.month, p.year)}</td>
-                          <td>Rs. {p.amountPaid.toLocaleString()}</td>
-                          <td>
-                            {shortfall > 0 ? (
-                              <span className="text-danger">
-                                Rs. {shortfall.toLocaleString()}
-                              </span>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          <td>
-                            <span
-                              className={`badge ${p.isPaid ? "bg-success" : "badge-partial"}`}
-                            >
-                              <i
-                                className={`bi ${p.isPaid ? "bi-check-circle-fill" : "bi-clock"}`}
-                                aria-hidden
-                              />
-                              {p.isPaid ? "Paid" : "Partial"}
-                            </span>
-                          </td>
-                        </tr>
+                    {(() => {
+                      const sorted = [...payments].sort((a, b) =>
+                        a.year !== b.year ? a.year - b.year : a.month - b.month,
                       );
-                    })}
+                      let accumulatedDues = 0;
+                      return sorted.map((p) => {
+                        const totalDue = occ.rent + accumulatedDues;
+                        const shortfall = totalDue - p.amountPaid;
+                        if (shortfall > 0) accumulatedDues = shortfall;
+                        else accumulatedDues = 0;
+                        const collectedStr = p.collectedAt
+                          ? new Date(p.collectedAt).toLocaleDateString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )
+                          : "—";
+                        return (
+                          <tr key={p.id || `stub-${p.year}-${p.month}`}>
+                            <td>{monthLabel(p.month, p.year)}</td>
+                            <td>Rs. {p.amountPaid.toLocaleString()}</td>
+                            <td>Rs. {totalDue.toLocaleString()}</td>
+                            <td>{collectedStr}</td>
+                            <td>
+                              <span
+                                className={`badge ${p.isPaid ? "bg-success" : "badge-partial"}`}
+                              >
+                                <i
+                                  className={`bi ${p.isPaid ? "bi-check-circle-fill" : "bi-clock"}`}
+                                  aria-hidden
+                                />
+                                {p.isPaid ? "Paid" : "Partial"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               ) : (

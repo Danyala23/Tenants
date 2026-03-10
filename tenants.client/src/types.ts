@@ -41,6 +41,7 @@ export interface RentPayment {
   month: number;
   isPaid: boolean;
   amountPaid: number;
+  collectedAt?: string | null;
 }
 
 export interface RentIncreaseRule {

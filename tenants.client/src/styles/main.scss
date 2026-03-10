@@ -404,13 +404,26 @@ a {
 .btn-outline-danger {
   background: transparent !important;
   color: var(--c-danger) !important;
-  border: 1px solid var(--c-danger-subtle) !important;
+  border: 1px solid var(--c-danger) !important;
 
   &:hover,
   &:focus {
     background: var(--c-danger) !important;
     color: #fff !important;
     border-color: var(--c-danger) !important;
+  }
+}
+
+.btn-outline-warning {
+  background: transparent !important;
+  color: var(--c-warning) !important;
+  border: 1px solid var(--c-warning) !important;
+
+  &:hover,
+  &:focus {
+    background: var(--c-warning) !important;
+    color: #0f172a !important;
+    border-color: var(--c-warning) !important;
   }
 }
 

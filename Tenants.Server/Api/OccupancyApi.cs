@@ -12,7 +12,7 @@ public static class OccupancyApi
 
         api.MapGet("/floors/{floorId:int}/occupancies", async (int floorId, TenantsDbContext db) =>
             Results.Ok(await db.TenantOccupancies
-                .Where(o => o.FloorId == floorId)
+                .Where(o => o.FloorId == floorId && o.EndDate == null)
                 .Include(o => o.Tenant)
                 .Include(o => o.Floor)
                 .Select(o => new OccupancyDto(o.Id, o.TenantId, o.Tenant.Name, o.Tenant.PhoneNumber, o.PropertyId, o.FloorId, o.Floor!.Label, false, o.Rent, o.SecurityDeposit, o.StartDate))
@@ -20,7 +20,7 @@ public static class OccupancyApi
 
         api.MapGet("/properties/{propertyId:int}/occupancies", async (int propertyId, TenantsDbContext db) =>
             Results.Ok(await db.TenantOccupancies
-                .Where(o => o.PropertyId == propertyId)
+                .Where(o => o.PropertyId == propertyId && o.EndDate == null)
                 .Include(o => o.Tenant)
                 .Include(o => o.Floor)
                 .Select(o => new OccupancyDto(o.Id, o.TenantId, o.Tenant.Name, o.Tenant.PhoneNumber, o.PropertyId, o.FloorId, o.Floor != null ? o.Floor.Label : null, o.FloorId == null, o.Rent, o.SecurityDeposit, o.StartDate))
@@ -82,6 +82,16 @@ public static class OccupancyApi
             if (req.Rent.HasValue) o.Rent = req.Rent.Value;
             if (req.SecurityDeposit.HasValue) o.SecurityDeposit = req.SecurityDeposit.Value;
             if (req.StartDate.HasValue) o.StartDate = req.StartDate.Value;
+            await db.SaveChangesAsync();
+            o = await db.TenantOccupancies.Include(x => x.Tenant).Include(x => x.Floor).FirstAsync(x => x.Id == id);
+            return Results.Ok(new OccupancyDto(o.Id, o.TenantId, o.Tenant.Name, o.Tenant.PhoneNumber, o.PropertyId, o.FloorId, o.Floor?.Label, o.FloorId == null, o.Rent, o.SecurityDeposit, o.StartDate));
+        });
+
+        api.MapPut("/occupancies/{id:int}/vacate", async (int id, TenantsDbContext db) =>
+        {
+            var o = await db.TenantOccupancies.FindAsync(id);
+            if (o == null) return Results.NotFound();
+            o.EndDate = DateTime.UtcNow.Date;
             await db.SaveChangesAsync();
             o = await db.TenantOccupancies.Include(x => x.Tenant).Include(x => x.Floor).FirstAsync(x => x.Id == id);
             return Results.Ok(new OccupancyDto(o.Id, o.TenantId, o.Tenant.Name, o.Tenant.PhoneNumber, o.PropertyId, o.FloorId, o.Floor?.Label, o.FloorId == null, o.Rent, o.SecurityDeposit, o.StartDate));

@@ -1,17 +1,20 @@
 import { Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
+import { PaperProvider } from 'react-native-paper';
+import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
 import { NotificationProvider } from './src/context/NotificationContext';
+import { LightTheme, DarkTheme, Colors } from './src/theme';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
   const { theme } = useThemeMode();
   const router = useRouter();
 
-  const paperTheme = theme === 'dark' ? MD3DarkTheme : MD3LightTheme;
+  const paperTheme = theme === 'dark' ? DarkTheme : LightTheme;
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     if (isLoading) return;
@@ -25,8 +28,8 @@ function RootLayoutNav() {
   if (isLoading) {
     return (
       <PaperProvider theme={paperTheme}>
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" />
+        <View style={[styles.loading, { backgroundColor: isDark ? Colors.darkBackground : Colors.background }]}>
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       </PaperProvider>
     );
@@ -34,6 +37,7 @@ function RootLayoutNav() {
 
   return (
     <PaperProvider theme={paperTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <NotificationProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="login" />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Dialog, TextInput, Button, Checkbox } from 'react-native-paper';
 import type { Floor, Occupancy } from '../types';
 
@@ -35,6 +36,11 @@ export default function TenantModal({
   const [securityDeposit, setSecurityDeposit] = useState('');
   const [startDate, setStartDate] = useState('');
   const [floorIds, setFloorIds] = useState<number[]>([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => {
+    if (!visible) setShowDatePicker(false);
+  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -74,6 +80,15 @@ export default function TenantModal({
           : [...prev, floorId]
       );
     }
+  };
+
+  const startDateValue = startDate
+    ? new Date(startDate + 'T12:00:00')
+    : new Date();
+
+  const handleDateChange = (_: unknown, date?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (date) setStartDate(date.toISOString().slice(0, 10));
   };
 
   const handleSave = () => {
@@ -139,14 +154,30 @@ export default function TenantModal({
               keyboardType="decimal-pad"
               style={styles.input}
             />
-            <TextInput
-              label="Start Date"
-              value={startDate}
-              onChangeText={setStartDate}
-              mode="outlined"
-              placeholder="YYYY-MM-DD"
-              style={styles.input}
-            />
+            <View style={styles.input}>
+              <Button
+                mode="outlined"
+                icon="calendar"
+                onPress={() => setShowDatePicker(true)}
+                contentStyle={{ justifyContent: 'flex-start' }}
+              >
+                {startDate
+                  ? new Date(startDate + 'T12:00:00').toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })
+                  : 'Select start date'}
+              </Button>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={startDateValue}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                />
+              )}
+            </View>
           </Dialog.Content>
         </ScrollView>
       </Dialog.ScrollArea>

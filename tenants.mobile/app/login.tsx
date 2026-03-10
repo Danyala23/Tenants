@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Text, Card, IconButton } from 'react-native-paper';
+import { TextInput, Button, Text, IconButton, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from './src/context/AuthContext';
 import { useThemeMode } from './src/context/ThemeContext';
 import { getServerUrl, setServerUrl, normalizeServerUrl } from './src/config';
+import { Colors, Spacing, Radius } from './src/theme';
 
 export default function LoginScreen() {
   const [serverUrl, setServerUrlLocal] = useState('');
@@ -14,8 +16,10 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showServerInput, setShowServerInput] = useState(false);
   const { login } = useAuth();
-  const { theme, toggleTheme } = useThemeMode();
+  const { theme: themeMode, toggleTheme } = useThemeMode();
+  const theme = useTheme();
   const router = useRouter();
+  const isDark = themeMode === 'dark';
 
   useEffect(() => {
     getServerUrl().then((url) => {
@@ -57,89 +61,144 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <IconButton
-            icon={theme === 'dark' ? 'white-balance-sunny' : 'moon-waning-crescent'}
+            icon={isDark ? 'white-balance-sunny' : 'moon-waning-crescent'}
             onPress={toggleTheme}
-            size={24}
+            size={22}
+            iconColor={theme.colors.onSurfaceVariant}
           />
         </View>
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="headlineMedium" style={styles.title}>
-              Property Manager
-            </Text>
-            <Text variant="bodyMedium" style={styles.subtitle}>
-              Sign in to your account
-            </Text>
 
-            {showServerInput ? (
-              <>
-                <TextInput
-                  label="Server URL"
-                  value={serverUrl}
-                  onChangeText={setServerUrlLocal}
-                  placeholder="https://your-server.com"
-                  mode="outlined"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="url"
-                  style={styles.input}
-                />
-                <Button mode="contained" onPress={handleSaveServerUrl} style={styles.button}>
-                  Save Server URL
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  mode="text"
-                  onPress={() => setShowServerInput(true)}
-                  style={styles.serverLink}
-                >
-                  Change Server URL
-                </Button>
-                {error ? (
-                  <Text variant="bodyMedium" style={styles.error}>
-                    {error}
-                  </Text>
-                ) : null}
-                <TextInput
-                  label="Username"
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholder="Enter username"
-                  mode="outlined"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.input}
-                />
-                <TextInput
-                  label="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Enter password"
-                  mode="outlined"
-                  secureTextEntry
-                  style={styles.input}
-                />
-                <Button
-                  mode="contained"
-                  onPress={handleLogin}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.button}
-                >
-                  Sign In
-                </Button>
-              </>
-            )}
-          </Card.Content>
-        </Card>
+        <View style={styles.brandSection}>
+          <View style={[styles.iconCircle, { backgroundColor: Colors.primarySurface }]}>
+            <MaterialCommunityIcons
+              name="home-city"
+              size={40}
+              color={Colors.primary}
+            />
+          </View>
+          <Text
+            variant="headlineMedium"
+            style={[styles.brandTitle, { color: theme.colors.onBackground }]}
+          >
+            Property Manager
+          </Text>
+          <Text
+            variant="bodyMedium"
+            style={[styles.brandSubtitle, { color: theme.colors.onSurfaceVariant }]}
+          >
+            Manage your properties with ease
+          </Text>
+        </View>
+
+        <View style={[styles.formCard, {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.outlineVariant,
+        }]}>
+          {showServerInput ? (
+            <>
+              <Text
+                variant="titleMedium"
+                style={[styles.formTitle, { color: theme.colors.onSurface }]}
+              >
+                Server Configuration
+              </Text>
+              <TextInput
+                label="Server URL"
+                value={serverUrl}
+                onChangeText={setServerUrlLocal}
+                placeholder="https://your-server.com"
+                mode="outlined"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                contentStyle={styles.inputContent}
+                left={<TextInput.Icon icon="server-network" />}
+              />
+              {error ? (
+                <Text variant="bodySmall" style={styles.error}>{error}</Text>
+              ) : null}
+              <Button
+                mode="contained"
+                onPress={handleSaveServerUrl}
+                style={styles.button}
+                contentStyle={styles.buttonContent}
+                labelStyle={styles.buttonLabel}
+              >
+                Save & Continue
+              </Button>
+            </>
+          ) : (
+            <>
+              <Text
+                variant="titleMedium"
+                style={[styles.formTitle, { color: theme.colors.onSurface }]}
+              >
+                Welcome back
+              </Text>
+              <Button
+                mode="text"
+                compact
+                onPress={() => setShowServerInput(true)}
+                style={styles.serverLink}
+                labelStyle={styles.serverLinkLabel}
+                icon="server-network"
+              >
+                Change Server
+              </Button>
+              {error ? (
+                <Text variant="bodySmall" style={styles.error}>{error}</Text>
+              ) : null}
+              <TextInput
+                label="Username"
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Enter username"
+                mode="outlined"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                contentStyle={styles.inputContent}
+                left={<TextInput.Icon icon="account-outline" />}
+              />
+              <TextInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter password"
+                mode="outlined"
+                secureTextEntry
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                contentStyle={styles.inputContent}
+                left={<TextInput.Icon icon="lock-outline" />}
+              />
+              <Button
+                mode="contained"
+                onPress={handleLogin}
+                loading={loading}
+                disabled={loading}
+                style={styles.button}
+                contentStyle={styles.buttonContent}
+                labelStyle={styles.buttonLabel}
+              >
+                Sign In
+              </Button>
+            </>
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -152,37 +211,73 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: Spacing.xxl,
   },
   header: {
     position: 'absolute',
     top: 48,
-    right: 8,
+    right: 0,
     zIndex: 10,
   },
-  card: {
-    marginVertical: 16,
+  brandSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.xxxl,
   },
-  title: {
-    textAlign: 'center',
-    marginBottom: 4,
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
   },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: 24,
-    opacity: 0.7,
+  brandTitle: {
+    fontWeight: '700',
+    marginBottom: Spacing.xs,
+  },
+  brandSubtitle: {
+    opacity: 0.8,
+  },
+  formCard: {
+    borderRadius: Radius.lg,
+    padding: Spacing.xxl,
+    borderWidth: 1,
+  },
+  formTitle: {
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
   },
   input: {
-    marginBottom: 16,
+    marginBottom: Spacing.md,
+  },
+  inputOutline: {
+    borderRadius: Radius.sm,
+  },
+  inputContent: {
+    paddingLeft: 12,
   },
   button: {
-    marginTop: 8,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.sm,
+  },
+  buttonContent: {
+    height: 48,
+  },
+  buttonLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   serverLink: {
-    marginBottom: 8,
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.md,
+  },
+  serverLinkLabel: {
+    fontSize: 12,
   },
   error: {
-    color: '#d32f2f',
-    marginBottom: 8,
+    color: Colors.error,
+    marginBottom: Spacing.md,
+    fontSize: 13,
   },
 });

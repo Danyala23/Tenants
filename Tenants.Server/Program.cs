@@ -67,8 +67,12 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// Serve SPA from client's dist folder (build with: cd tenants.client && npm run build)
+#if DEBUG
 var clientDistPath = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "tenants.client", "dist"));
+#else
+var clientDistPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+#endif
+
 if (Directory.Exists(clientDistPath))
 {
     var fileProvider = new PhysicalFileProvider(clientDistPath);
@@ -84,7 +88,10 @@ else
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    using var scope = app.Services.CreateScope();
+}
+
+using (var scope = app.Services.CreateScope())
+{
     var db = scope.ServiceProvider.GetRequiredService<TenantsDbContext>();
     await db.Database.MigrateAsync();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

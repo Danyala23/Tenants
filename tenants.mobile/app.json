@@ -2,7 +2,7 @@
   "expo": {
     "name": "Property Manager",
     "scheme": "tenants",
-    "slug": "tenants.mobile",
+    "slug": "tenants-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -32,6 +32,12 @@
       "expo-router",
       "expo-secure-store",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c1af479c-61d0-497a-a218-706ac4ea0de2"
+      }
+    }
   }
 }

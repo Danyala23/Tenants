@@ -140,6 +140,60 @@ OpenAPI is available in Development at the configured OpenAPI path.
 
 Scrapers run in the background; you can also trigger a scrape from the UI or via `POST /bills/scrape-now?type=Electricity` or `?type=Gas`. Full setup and prerequisites are in [Tenants.Server/BILLS_SCRAPING.md](Tenants.Server/BILLS_SCRAPING.md).
 
+## Deployment to Azure App Service
+
+The app is deployed to **Azure App Service** using Web Deploy (MSDeploy). The publish profile is pre-configured at `Tenants.Server/Properties/PublishProfiles/AppService.pubxml`.
+
+**Live URL:** https://tenants-app-fga3bpcbgtarf0d9.westcentralus-01.azurewebsites.net
+
+### Prerequisites
+
+- An **Azure App Service** with **.NET 10** runtime stack
+- An **Azure SQL Database** with the connection string configured in App Service > Configuration > Connection strings
+- **Basic Auth Publishing Credentials** enabled on the App Service (Settings > Configuration > General settings > SCM Basic Auth = On)
+
+### Deploy from CLI
+
+From the solution root:
+
+```bash
+dotnet publish Tenants.Server/Tenants.Server.csproj -c Release /p:PublishProfile=AppService /p:Password="<deployment-password>"
+```
+
+This builds the server and client, then deploys via MSDeploy to Azure. The deployment password is the app-level credential from your publish profile (stored in `AppService.pubxml.user`).
+
+### Deploy from Visual Studio
+
+1. Right-click **Tenants.Server** > **Publish**
+2. Select the **AppService** profile (or import a `.PublishSettings` file downloaded from Azure Portal)
+3. Click **Publish**
+
+### Updating the publish profile
+
+If the deployment credentials expire or the App Service is recreated:
+
+1. Go to Azure Portal > your App Service > **Download publish profile**
+2. In Visual Studio, delete the old profile and **Import Profile** with the downloaded `.PublishSettings` file
+3. Alternatively, update `AppService.pubxml` manually — the key properties are:
+   - `MSDeployServiceURL` — the SCM hostname with port (e.g. `<app>.scm.<region>.azurewebsites.net:443`)
+   - `DeployIisAppPath` — the app name (e.g. `tenants-app`)
+   - `UserName` — the deployment username (e.g. `$tenants-app`)
+   - `Password` in `AppService.pubxml.user` — the deployment password
+
+### Database migrations
+
+Migrations run automatically on app startup (see `Program.cs`). To apply migrations manually against the Azure SQL database:
+
+```bash
+dotnet ef database update --project Tenants.Server --connection "Server=tcp:<server>.database.windows.net,1433;Initial Catalog=Tenants;User ID=<user>;Password=<password>;Encrypt=True;TrustServerCertificate=False;"
+```
+
+### Important notes
+
+- **Do not use `PublishProtocol=Kudu`** in the pubxml — the .NET 10 SDK's KuduDeploy task has compatibility issues with regional Azure URLs. Use `WebPublishMethod=MSDeploy` instead.
+- Keep `AppService.pubxml.user` (contains the deployment password) out of source control via `.gitignore`.
+- The `Jwt:Key` and database connection string should be configured as **App Service Configuration** settings in Azure, not hardcoded in `appsettings.json`.
+
 ## License
 
 Private / All rights reserved (or specify your license).

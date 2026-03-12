@@ -7,8 +7,11 @@ import type { RentPayment } from '../types';
 
 interface CollectRentModalProps {
   visible: boolean;
+  mode?: 'single' | 'bulk';
+  floorCount?: number;
   rent: number;
   dues: number;
+  totalDue?: number;
   amount: number;
   selectedYear: number;
   selectedMonth: number;
@@ -23,12 +26,16 @@ interface CollectRentModalProps {
   onCollectedAtChange: (value: string) => void;
   onSubmit: () => void;
   onDismiss: () => void;
+  onSwitchToSingle?: () => void;
 }
 
 export default function CollectRentModal({
   visible,
+  mode = 'single',
+  floorCount,
   rent,
   dues,
+  totalDue: totalDueProp,
   amount,
   selectedYear,
   selectedMonth,
@@ -43,11 +50,16 @@ export default function CollectRentModal({
   onCollectedAtChange,
   onSubmit,
   onDismiss,
+  onSwitchToSingle,
 }: CollectRentModalProps) {
   const showPeriodPicker = dues > 0 && unpaidMonths.length > 0;
-  const totalDue = showPeriodPicker
-    ? rent + computeDues(rent, payments, startDate, selectedYear, selectedMonth)
-    : rent + dues;
+  const totalDue =
+    totalDueProp != null
+      ? totalDueProp
+      : showPeriodPicker
+        ? rent + computeDues(rent, payments, startDate, selectedYear, selectedMonth)
+        : rent + dues;
+  const isBulk = mode === 'bulk' && (floorCount ?? 0) > 1;
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [periodMenuVisible, setPeriodMenuVisible] = useState(false);
 
@@ -64,9 +76,24 @@ export default function CollectRentModal({
 
   return (
     <Dialog visible={visible} onDismiss={onDismiss}>
-      <Dialog.Title>Collect Rent — {monthLabel(selectedMonth, selectedYear)}</Dialog.Title>
+      <Dialog.Title>
+        Collect Rent — {monthLabel(selectedMonth, selectedYear)}
+        {isBulk ? ` (All ${floorCount} floors)` : ''}
+      </Dialog.Title>
       <Dialog.Content>
-        <Text variant="bodyMedium">Monthly Rent: Rs. {rent.toLocaleString()}</Text>
+        {isBulk && onSwitchToSingle && (
+          <Button
+            mode="outlined"
+            compact
+            onPress={onSwitchToSingle}
+            style={{ marginBottom: 12 }}
+          >
+            Collect for this floor only
+          </Button>
+        )}
+        <Text variant="bodyMedium">
+          {isBulk ? 'Total Monthly Rent' : 'Monthly Rent'}: Rs. {rent.toLocaleString()}
+        </Text>
         {dues > 0 && (
           <>
             <Text variant="bodyMedium" style={{ color: '#d32f2f' }}>

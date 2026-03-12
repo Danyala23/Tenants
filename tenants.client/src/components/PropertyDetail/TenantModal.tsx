@@ -13,6 +13,7 @@ interface OccupancyForm {
 interface TenantModalProps {
   editingOccupancy: Occupancy | null;
   floors: Floor[];
+  disabledFloorIds?: number[];
   form: OccupancyForm;
   onFormChange: (updater: (f: OccupancyForm) => OccupancyForm) => void;
   onToggleFloor: (floorId: number) => void;
@@ -23,12 +24,14 @@ interface TenantModalProps {
 export function TenantModal({
   editingOccupancy,
   floors,
+  disabledFloorIds = [],
   form,
   onFormChange,
   onToggleFloor,
   onSubmit,
   onClose,
 }: TenantModalProps) {
+  const isFloorDisabled = (floorId: number) => disabledFloorIds.includes(floorId);
   return (
     <div className="modal show d-block" tabIndex={-1}>
       <div className="modal-dialog modal-dialog-centered">
@@ -71,58 +74,40 @@ export function TenantModal({
                 />
               </div>
               <div className="mb-2">
-                <label className="form-label">
-                  {editingOccupancy ? "Floor" : "Floors"}
-                </label>
-                {editingOccupancy ? (
-                  <select
-                    className="form-select"
-                    value={form.floorIds[0] ?? ""}
-                    onChange={(e) =>
-                      onFormChange((f) => ({
-                        ...f,
-                        floorIds: e.target.value
-                          ? [parseInt(e.target.value)]
-                          : [],
-                      }))
-                    }
-                  >
-                    {floors.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        Floor {f.floorNumber} {f.label ? `(${f.label})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <>
-                    <div className="d-flex flex-wrap gap-2">
-                      {floors.map((f) => (
-                        <label
-                          key={f.id}
-                          className="form-check form-check-inline"
-                        >
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            checked={form.floorIds.includes(f.id)}
-                            onChange={() => onToggleFloor(f.id)}
-                          />
-                          <span className="form-check-label">
-                            {f.floorNumber} {f.label ? `(${f.label})` : ""}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                    <small className="text-muted">
-                      Select one or more floors for this tenant.
-                    </small>
-                  </>
-                )}
+                <label className="form-label">Floors</label>
+                <div className="d-flex flex-wrap gap-2">
+                  {floors.map((f) => {
+                    const disabled = isFloorDisabled(f.id);
+                    return (
+                      <label
+                        key={f.id}
+                        className={`form-check form-check-inline ${disabled ? "text-muted" : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          checked={form.floorIds.includes(f.id)}
+                          disabled={disabled}
+                          onChange={() => !disabled && onToggleFloor(f.id)}
+                        />
+                        <span className="form-check-label">
+                          Floor {f.floorNumber} {f.label ? `(${f.label})` : ""}
+                          {disabled && " (occupied)"}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <small className="text-muted">
+                  {editingOccupancy
+                    ? "Add empty floors or remove floors for this tenant."
+                    : "Select one or more floors for this tenant."}
+                </small>
               </div>
               <div className="mb-2">
                 <label className="form-label">
                   Rent{" "}
-                  {!editingOccupancy && form.floorIds.length > 1 ? "(total)" : ""}
+                  {form.floorIds.length > 1 ? "(total)" : ""}
                 </label>
                 <input
                   type="number"
@@ -140,7 +125,7 @@ export function TenantModal({
               <div className="mb-2">
                 <label className="form-label">
                   Security Deposit{" "}
-                  {!editingOccupancy && form.floorIds.length > 1 ? "(total)" : ""}
+                  {form.floorIds.length > 1 ? "(total)" : ""}
                 </label>
                 <input
                   type="number"
@@ -154,7 +139,7 @@ export function TenantModal({
                     }))
                   }
                 />
-                {!editingOccupancy && form.floorIds.length > 1 && (
+                {form.floorIds.length > 1 && (
                   <small className="text-muted d-block mt-1">
                     Split across {form.floorIds.length} floors:{" "}
                     {(form.rent / form.floorIds.length).toFixed(2)} rent and{" "}

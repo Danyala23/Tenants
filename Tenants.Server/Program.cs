@@ -19,7 +19,18 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddDbContext<TenantsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString(builder.Configuration["ActiveConnection"] ?? "DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString(builder.Configuration["ActiveConnection"] ?? "DefaultConnection");
+    options.UseSqlServer(connectionString, sql =>
+    {
+        // Handle cold-start / idle timeout: Azure SQL closes connections while app sleeps.
+        // Retries transient failures when the app wakes and pool has stale connections.
+        sql.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null);
+    });
+});
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
     options.Password.RequireDigit = true;

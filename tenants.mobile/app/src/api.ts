@@ -171,6 +171,20 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
+    collectBulk: (
+      propertyId: number,
+      tenantId: number,
+      data: {
+        year: number;
+        month: number;
+        collectedAt?: string;
+        allocations: { occupancyId: number; amountPaid: number }[];
+      }
+    ) =>
+      fetchApi<RentPayment[]>(`/properties/${propertyId}/tenants/${tenantId}/payments/collect-bulk`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
   },
 
   rentIncrease: {

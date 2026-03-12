@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Dialog, TextInput, Button, Checkbox } from 'react-native-paper';
 import type { Floor, Occupancy } from '../types';
@@ -18,6 +18,14 @@ interface TenantModalProps {
   editingOccupancy: Occupancy | null;
   floors: Floor[];
   preselectedFloorId?: number;
+  /** When editing, all floor IDs this tenant currently occupies (for multi-floor). */
+  initialFloorIdsWhenEditing?: number[];
+  /** When editing multi-floor, total rent across all occupancies. */
+  initialRentWhenEditing?: number;
+  /** When editing multi-floor, total security deposit across all occupancies. */
+  initialDepositWhenEditing?: number;
+  /** Floor IDs to disable (e.g. occupied by other tenants). */
+  disabledFloorIds?: number[];
   onDismiss: () => void;
   onSave: (form: OccupancyForm) => void;
 }
@@ -27,6 +35,10 @@ export default function TenantModal({
   editingOccupancy,
   floors,
   preselectedFloorId,
+  initialFloorIdsWhenEditing,
+  initialRentWhenEditing,
+  initialDepositWhenEditing,
+  disabledFloorIds = [],
   onDismiss,
   onSave,
 }: TenantModalProps) {
@@ -47,11 +59,23 @@ export default function TenantModal({
       if (editingOccupancy) {
         setName(editingOccupancy.tenantName);
         setPhoneNumber(editingOccupancy.tenantPhone);
-        setRent(String(editingOccupancy.rent));
-        setSecurityDeposit(String(editingOccupancy.securityDeposit));
+        const totalRent =
+          initialRentWhenEditing != null
+            ? initialRentWhenEditing
+            : editingOccupancy.rent;
+        const totalDeposit =
+          initialDepositWhenEditing != null
+            ? initialDepositWhenEditing
+            : editingOccupancy.securityDeposit;
+        setRent(String(totalRent));
+        setSecurityDeposit(String(totalDeposit));
         setStartDate(editingOccupancy.startDate.slice(0, 10));
         setFloorIds(
-          editingOccupancy.floorId != null ? [editingOccupancy.floorId] : []
+          (initialFloorIdsWhenEditing && initialFloorIdsWhenEditing.length > 0)
+            ? initialFloorIdsWhenEditing
+            : editingOccupancy.floorId != null
+              ? [editingOccupancy.floorId]
+              : []
         );
       } else {
         setName('');
@@ -68,18 +92,15 @@ export default function TenantModal({
         );
       }
     }
-  }, [visible, editingOccupancy, floors, preselectedFloorId]);
+  }, [visible, editingOccupancy, floors, preselectedFloorId, initialFloorIdsWhenEditing, initialRentWhenEditing, initialDepositWhenEditing]);
 
   const toggleFloor = (floorId: number) => {
-    if (editingOccupancy) {
-      setFloorIds([floorId]);
-    } else {
-      setFloorIds((prev) =>
-        prev.includes(floorId)
-          ? prev.filter((id) => id !== floorId)
-          : [...prev, floorId]
-      );
-    }
+    if (disabledFloorIds.includes(floorId)) return;
+    setFloorIds((prev) =>
+      prev.includes(floorId)
+        ? prev.filter((id) => id !== floorId)
+        : [...prev, floorId]
+    );
   };
 
   const startDateValue = startDate
@@ -129,25 +150,34 @@ export default function TenantModal({
               disabled={!!editingOccupancy?.tenantId}
             />
             <View style={styles.floorSection}>
-              {floors.map((f) => (
-                <Checkbox.Item
-                  key={f.id}
-                  label={`Floor ${f.floorNumber} ${f.label ? `(${f.label})` : ''}`}
-                  status={floorIds.includes(f.id) ? 'checked' : 'unchecked'}
-                  onPress={() => toggleFloor(f.id)}
-                />
-              ))}
+              {floors.map((f) => {
+                const disabled = disabledFloorIds.includes(f.id);
+                return (
+                  <Checkbox.Item
+                    key={f.id}
+                    label={`Floor ${f.floorNumber} ${f.label ? `(${f.label})` : ''}${disabled ? ' (occupied)' : ''}`}
+                    status={floorIds.includes(f.id) ? 'checked' : 'unchecked'}
+                    onPress={() => toggleFloor(f.id)}
+                    disabled={disabled}
+                  />
+                );
+              })}
             </View>
             <TextInput
-              label="Rent"
+              label={floorIds.length > 1 ? 'Rent (total)' : 'Rent'}
               value={rent}
               onChangeText={setRent}
               mode="outlined"
               keyboardType="decimal-pad"
               style={styles.input}
             />
+            {floorIds.length > 1 && (
+              <Text style={[styles.input, { fontSize: 12, color: '#666' }]}>
+                Split across {floorIds.length} floors: {((parseFloat(rent) || 0) / floorIds.length).toFixed(2)} rent, {((parseFloat(securityDeposit) || 0) / floorIds.length).toFixed(2)} deposit per floor
+              </Text>
+            )}
             <TextInput
-              label="Security Deposit"
+              label={floorIds.length > 1 ? 'Security Deposit (total)' : 'Security Deposit'}
               value={securityDeposit}
               onChangeText={setSecurityDeposit}
               mode="outlined"

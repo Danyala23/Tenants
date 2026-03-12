@@ -82,6 +82,65 @@ public static class RentApi
             return Results.Ok(new RentPaymentDto(payment.Id, payment.TenantOccupancyId, payment.Year, payment.Month, payment.IsPaid, payment.AmountPaid, payment.CollectedAt));
         });
 
+        api.MapPut("/properties/{propertyId:int}/tenants/{tenantId:int}/payments/collect-bulk", async (int propertyId, int tenantId, CollectRentBulkRequest req, TenantsDbContext db) =>
+        {
+            var occupancies = await db.TenantOccupancies
+                .Where(o => o.TenantId == tenantId && o.PropertyId == propertyId && o.EndDate == null)
+                .ToListAsync();
+            if (occupancies.Count == 0) return Results.NotFound();
+
+            var occIds = occupancies.Select(o => o.Id).ToHashSet();
+            var allocByOcc = req.Allocations.ToDictionary(a => a.OccupancyId);
+            foreach (var alloc in req.Allocations)
+            {
+                if (!occIds.Contains(alloc.OccupancyId))
+                    return Results.BadRequest($"Occupancy {alloc.OccupancyId} does not belong to tenant {tenantId} in property {propertyId}");
+            }
+            foreach (var occId in occIds)
+            {
+                if (!allocByOcc.ContainsKey(occId))
+                    return Results.BadRequest($"Missing allocation for occupancy {occId}");
+            }
+
+            var collectedAt = req.CollectedAt ?? DateTime.UtcNow;
+            var results = new List<RentPaymentDto>();
+
+            foreach (var alloc in req.Allocations)
+            {
+                var occupancy = occupancies.First(o => o.Id == alloc.OccupancyId);
+                var payment = await db.RentPayments
+                    .FirstOrDefaultAsync(r => r.TenantOccupancyId == alloc.OccupancyId && r.Year == req.Year && r.Month == req.Month);
+
+                if (payment == null)
+                {
+                    payment = new RentPayment
+                    {
+                        TenantOccupancyId = alloc.OccupancyId,
+                        Year = req.Year,
+                        Month = req.Month,
+                        AmountPaid = alloc.AmountPaid,
+                        IsPaid = alloc.AmountPaid >= occupancy.Rent,
+                        CollectedAt = collectedAt,
+                    };
+                    db.RentPayments.Add(payment);
+                }
+                else
+                {
+                    payment.AmountPaid = alloc.AmountPaid;
+                    payment.IsPaid = alloc.AmountPaid >= occupancy.Rent;
+                    payment.CollectedAt = collectedAt;
+                }
+            }
+
+            await db.SaveChangesAsync();
+            foreach (var alloc in req.Allocations)
+            {
+                var payment = await db.RentPayments.FirstAsync(r => r.TenantOccupancyId == alloc.OccupancyId && r.Year == req.Year && r.Month == req.Month);
+                results.Add(new RentPaymentDto(payment.Id, payment.TenantOccupancyId, payment.Year, payment.Month, payment.IsPaid, payment.AmountPaid, payment.CollectedAt));
+            }
+            return Results.Ok(results);
+        });
+
         api.MapGet("/occupancies/{occupancyId:int}/rent-increase", async (int occupancyId, TenantsDbContext db) =>
         {
             var rule = await db.RentIncreaseRules.FirstOrDefaultAsync(r => r.TenantOccupancyId == occupancyId);

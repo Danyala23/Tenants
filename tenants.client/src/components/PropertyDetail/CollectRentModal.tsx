@@ -2,8 +2,11 @@ import { monthLabel, computeDues } from "../../utils/dateUtils";
 import type { RentPayment } from "../../types";
 
 interface CollectRentModalProps {
+  mode?: "single" | "bulk";
+  floorCount?: number;
   rent: number;
   dues: number;
+  totalDue?: number;
   amount: number;
   selectedYear: number;
   selectedMonth: number;
@@ -18,11 +21,15 @@ interface CollectRentModalProps {
   onCollectedAtChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
+  onSwitchToSingle?: () => void;
 }
 
 export function CollectRentModal({
+  mode = "single",
+  floorCount,
   rent,
   dues,
+  totalDue: totalDueProp,
   amount,
   selectedYear,
   selectedMonth,
@@ -37,12 +44,17 @@ export function CollectRentModal({
   onCollectedAtChange,
   onSubmit,
   onClose,
+  onSwitchToSingle,
 }: CollectRentModalProps) {
   const showPeriodPicker = dues > 0 && unpaidMonths.length > 0;
-  const totalDue = showPeriodPicker
-    ? rent + computeDues(rent, payments, startDate, selectedYear, selectedMonth)
-    : rent + dues;
+  const totalDue =
+    totalDueProp != null
+      ? totalDueProp
+      : showPeriodPicker
+        ? rent + computeDues(rent, payments, startDate, selectedYear, selectedMonth)
+        : rent + dues;
   const todayStr = new Date().toISOString().slice(0, 10);
+  const isBulk = mode === "bulk" && (floorCount ?? 0) > 1;
 
   return (
     <div className="modal show d-block" tabIndex={-1}>
@@ -52,13 +64,29 @@ export function CollectRentModal({
             <h5 className="modal-title d-inline-flex align-items-center gap-2">
               <i className="bi bi-wallet2" aria-hidden />
               Collect Rent — {monthLabel(selectedMonth, selectedYear)}
+              {isBulk && (
+                <span className="badge bg-primary ms-1">
+                  All {floorCount} floors
+                </span>
+              )}
             </h5>
             <button type="button" className="btn-close" onClick={onClose} />
           </div>
           <form onSubmit={onSubmit}>
             <div className="modal-body">
+              {isBulk && onSwitchToSingle && (
+                <div className="mb-3">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={onSwitchToSingle}
+                  >
+                    Collect for this floor only
+                  </button>
+                </div>
+              )}
               <dl className="row mb-3">
-                <dt className="col-sm-5">Monthly Rent</dt>
+                <dt className="col-sm-5">{isBulk ? "Total Monthly Rent" : "Monthly Rent"}</dt>
                 <dd className="col-sm-7">Rs. {rent.toLocaleString()}</dd>
                 {dues > 0 && (
                   <>

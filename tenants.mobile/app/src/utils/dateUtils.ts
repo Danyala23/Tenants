@@ -94,3 +94,71 @@ export function getUnpaidMonths(
   }
   return result;
 }
+
+/**
+ * Compute per-occupancy allocations when collecting bulk (all floors).
+ * If amountPaid >= totalDue, each occupancy gets its full due.
+ * Otherwise allocates proportionally by due amount, with remainder to first.
+ */
+export function computeBulkAllocations(
+  occupancies: { id: number; rent: number; startDate: string }[],
+  paymentsByOccupancy: Record<number, { year: number; month: number; amountPaid: number }[]>,
+  year: number,
+  month: number,
+  amountPaid: number
+): { occupancyId: number; amountPaid: number }[] {
+  const duesByOcc = occupancies.map((occ) => ({
+    id: occ.id,
+    due: occ.rent + computeDues(occ.rent, paymentsByOccupancy[occ.id] ?? [], occ.startDate, year, month),
+  }));
+  const totalDue = duesByOcc.reduce((s, x) => s + x.due, 0);
+  if (totalDue <= 0) return occupancies.map((o) => ({ occupancyId: o.id, amountPaid: 0 }));
+
+  if (amountPaid >= totalDue) {
+    return duesByOcc.map(({ id, due }) => ({ occupancyId: id, amountPaid: Math.round(due * 100) / 100 }));
+  }
+
+  const result: { occupancyId: number; amountPaid: number }[] = [];
+  let allocated = 0;
+  for (let i = 0; i < duesByOcc.length; i++) {
+    const { id, due } = duesByOcc[i];
+    const ratio = due / totalDue;
+    const raw = amountPaid * ratio;
+    const amt =
+      i < duesByOcc.length - 1
+        ? Math.round(raw * 100) / 100
+        : Math.round((amountPaid - allocated) * 100) / 100;
+    allocated += amt;
+    result.push({ occupancyId: id, amountPaid: amt });
+  }
+  return result;
+}
+
+/** Union of unpaid months across multiple occupancies, sorted by (year, month). */
+export function getUnpaidMonthsBulk(
+  occupancies: { id: number; rent: number; startDate: string }[],
+  paymentsByOccupancy: Record<number, { year: number; month: number; amountPaid: number }[]>,
+  currentYear: number,
+  currentMonth: number
+): MonthKey[] {
+  const seen = new Set<string>();
+  for (const occ of occupancies) {
+    const months = getUnpaidMonths(
+      occ.rent,
+      paymentsByOccupancy[occ.id] ?? [],
+      occ.startDate,
+      currentYear,
+      currentMonth
+    );
+    for (const { year, month } of months) {
+      seen.add(`${year}-${month}`);
+    }
+  }
+  const arr = Array.from(seen)
+    .map((s) => {
+      const [y, m] = s.split("-").map(Number);
+      return { year: y, month: m };
+    })
+    .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month));
+  return arr;
+}

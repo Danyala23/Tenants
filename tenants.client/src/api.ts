@@ -122,6 +122,15 @@ export const api = {
     listByOccupancy: (occupancyId: number) => fetchApi<RentPayment[]>(`/occupancies/${occupancyId}/payments`),
     collect: (occupancyId: number, data: { year: number; month: number; amountPaid: number; collectedAt?: string }) =>
       fetchApi<RentPayment>(`/occupancies/${occupancyId}/payments/collect`, { method: 'PUT', body: JSON.stringify(data) }),
+    collectBulk: (
+      propertyId: number,
+      tenantId: number,
+      data: { year: number; month: number; collectedAt?: string; allocations: { occupancyId: number; amountPaid: number }[] }
+    ) =>
+      fetchApi<RentPayment[]>(`/properties/${propertyId}/tenants/${tenantId}/payments/collect-bulk`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
   },
 
   rentIncrease: {

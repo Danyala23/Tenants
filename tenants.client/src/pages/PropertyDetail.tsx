@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api";
 import { useNotifications } from "../context/NotificationContext";
-import { computeDues, getUnpaidMonths } from "../utils/dateUtils";
+import { computeDues, getUnpaidMonths, getUnpaidMonthsBulk, computeBulkAllocations } from "../utils/dateUtils";
 import type {
   Property,
   Floor,
@@ -73,7 +73,11 @@ export function PropertyDetail() {
   });
 
   const [collectModal, setCollectModal] = useState<{
+    mode: "single" | "bulk";
     occId: number;
+    tenantId?: number;
+    occupancies?: Occupancy[];
+    triggerOcc?: Occupancy;
     rent: number;
     dues: number;
     unpaidMonths: { year: number; month: number }[];
@@ -209,7 +213,87 @@ export function PropertyDetail() {
     });
   }
 
-  function openCollectModal(occ: Occupancy) {
+  const occupanciesByTenantInProperty = occupanciesByFloor
+    ? Object.values(occupanciesByFloor).flat().reduce((acc, occ) => {
+        if (!acc[occ.tenantId]) acc[occ.tenantId] = [];
+        acc[occ.tenantId].push(occ);
+        return acc;
+      }, {} as Record<number, Occupancy[]>)
+    : {};
+
+  function openCollectModal(occ: Occupancy, forAllFloors?: boolean) {
+    const sameTenantOccs = occupanciesByTenantInProperty[occ.tenantId] ?? [];
+    const isMultiFloor = sameTenantOccs.length > 1;
+    const useBulk = forAllFloors ?? (isMultiFloor ? true : false);
+
+    if (useBulk && isMultiFloor) {
+      const occupancies = sameTenantOccs;
+      const totalRent = occupancies.reduce((s, o) => s + o.rent, 0);
+      const totalDues = occupancies.reduce(
+        (s, o) => s + getDues(o.id, o.rent, o.startDate, paymentsByOccupancy[o.id] ?? []),
+        0
+      );
+      const unpaidMonths = getUnpaidMonthsBulk(
+        occupancies,
+        paymentsByOccupancy,
+        currentYear,
+        currentMonth
+      );
+      const hasDues = totalDues > 0;
+      const periodYear = hasDues && unpaidMonths.length > 0 ? unpaidMonths[0].year : currentYear;
+      const periodMonth = hasDues && unpaidMonths.length > 0 ? unpaidMonths[0].month : currentMonth;
+      const totalForPeriod =
+        totalRent +
+        occupancies.reduce(
+          (s, o) =>
+            s +
+            computeDues(o.rent, paymentsByOccupancy[o.id] ?? [], o.startDate, periodYear, periodMonth),
+          0
+        );
+      setCollectModal({
+        mode: "bulk",
+        occId: occ.id,
+        tenantId: occ.tenantId,
+        occupancies,
+        triggerOcc: occ,
+        rent: totalRent,
+        dues: totalDues,
+        unpaidMonths,
+        startDate: occupancies[0].startDate,
+        payments: [],
+      });
+      setCollectYear(periodYear);
+      setCollectMonth(periodMonth);
+      setCollectAmount(totalForPeriod);
+    } else {
+      const payments = paymentsByOccupancy[occ.id] ?? [];
+      const dues = getDues(occ.id, occ.rent, occ.startDate, payments);
+      const unpaidMonths = getUnpaidMonths(occ.rent, payments, occ.startDate, currentYear, currentMonth);
+      const hasDues = dues > 0;
+      const periodYear = hasDues && unpaidMonths.length > 0 ? unpaidMonths[0].year : currentYear;
+      const periodMonth = hasDues && unpaidMonths.length > 0 ? unpaidMonths[0].month : currentMonth;
+      const totalForPeriod = hasDues
+        ? occ.rent + computeDues(occ.rent, payments, occ.startDate, periodYear, periodMonth)
+        : occ.rent + dues;
+      setCollectModal({
+        mode: "single",
+        occId: occ.id,
+        triggerOcc: occ,
+        rent: occ.rent,
+        dues,
+        unpaidMonths,
+        startDate: occ.startDate,
+        payments,
+      });
+      setCollectYear(periodYear);
+      setCollectMonth(periodMonth);
+      setCollectAmount(totalForPeriod);
+    }
+    setCollectCollectedToday(true);
+    setCollectCollectedAt(new Date().toISOString().slice(0, 10));
+  }
+
+  function switchCollectToSingle(occ: Occupancy) {
     const payments = paymentsByOccupancy[occ.id] ?? [];
     const dues = getDues(occ.id, occ.rent, occ.startDate, payments);
     const unpaidMonths = getUnpaidMonths(occ.rent, payments, occ.startDate, currentYear, currentMonth);
@@ -219,12 +303,18 @@ export function PropertyDetail() {
     const totalForPeriod = hasDues
       ? occ.rent + computeDues(occ.rent, payments, occ.startDate, periodYear, periodMonth)
       : occ.rent + dues;
-    setCollectModal({ occId: occ.id, rent: occ.rent, dues, unpaidMonths, startDate: occ.startDate, payments });
+    setCollectModal({
+      mode: "single",
+      occId: occ.id,
+      rent: occ.rent,
+      dues,
+      unpaidMonths,
+      startDate: occ.startDate,
+      payments,
+    });
     setCollectYear(periodYear);
     setCollectMonth(periodMonth);
     setCollectAmount(totalForPeriod);
-    setCollectCollectedToday(true);
-    setCollectCollectedAt(new Date().toISOString().slice(0, 10));
   }
 
   async function handleCollect(e: React.FormEvent) {
@@ -234,14 +324,34 @@ export function PropertyDetail() {
       ? undefined
       : `${collectCollectedAt}T00:00:00.000Z`;
     try {
-      await api.payments.collect(collectModal.occId, {
-        year: collectYear,
-        month: collectMonth,
-        amountPaid: collectAmount,
-        collectedAt,
-      });
+      if (collectModal.mode === "bulk" && collectModal.tenantId != null && collectModal.occupancies) {
+        const allocations = computeBulkAllocations(
+          collectModal.occupancies,
+          paymentsByOccupancy,
+          collectYear,
+          collectMonth,
+          collectAmount
+        );
+        await api.payments.collectBulk(propertyId, collectModal.tenantId, {
+          year: collectYear,
+          month: collectMonth,
+          collectedAt,
+          allocations: allocations.map((a) => ({ occupancyId: a.occupancyId, amountPaid: a.amountPaid })),
+        });
+        toast({
+          message: `Rent collected for all ${collectModal.occupancies.length} floors.`,
+          type: "success",
+        });
+      } else {
+        await api.payments.collect(collectModal.occId, {
+          year: collectYear,
+          month: collectMonth,
+          amountPaid: collectAmount,
+          collectedAt,
+        });
+        toast({ message: "Rent collected successfully.", type: "success" });
+      }
       setCollectModal(null);
-      toast({ message: "Rent collected successfully.", type: "success" });
       loadData();
     } catch (error) {
       console.error(error);
@@ -308,19 +418,20 @@ export function PropertyDetail() {
   function openOccupancyEdit(occ: Occupancy) {
     setTenantModal(true);
     setEditingOccupancy(occ);
+    const tenantOccs = occupanciesByTenantInProperty[occ.tenantId] ?? [];
+    const currentFloorIds = tenantOccs
+      .map((o) => o.floorId)
+      .filter((id): id is number => id != null);
+    const totalRent = tenantOccs.reduce((s, o) => s + o.rent, 0);
+    const totalDeposit = tenantOccs.reduce((s, o) => s + o.securityDeposit, 0);
     setOccupancyForm({
       name: occ.tenantName,
       phoneNumber: occ.tenantPhone,
-      rent: occ.rent,
-      securityDeposit: occ.securityDeposit,
+      rent: totalRent,
+      securityDeposit: totalDeposit,
       startDate: occ.startDate.slice(0, 10),
-      floorIds:
-        occ.floorId != null
-          ? [occ.floorId]
-          : floors.length > 0
-            ? [floors[0].id]
-            : [],
-      existingTenantId: null,
+      floorIds: currentFloorIds.length > 0 ? currentFloorIds : occ.floorId != null ? [occ.floorId] : [],
+      existingTenantId: occ.tenantId,
     });
   }
 
@@ -342,16 +453,45 @@ export function PropertyDetail() {
     }
     try {
       if (editingOccupancy) {
-        await api.occupancies.update(editingOccupancy.id, {
-          floorId: floorIds[0],
-          rent: occupancyForm.rent,
-          securityDeposit: occupancyForm.securityDeposit,
-          startDate: occupancyForm.startDate,
-        });
-        await api.tenants.update(editingOccupancy.tenantId, {
+        const tenantId = editingOccupancy.tenantId;
+        const existingOccs = occupanciesByTenantInProperty[tenantId] ?? [];
+        const existingFloorIds = new Set(
+          existingOccs.map((o) => o.floorId).filter((id): id is number => id != null)
+        );
+        const floorsToAdd = floorIds.filter((id) => !existingFloorIds.has(id));
+        const floorsToRemove = existingOccs.filter(
+          (o) => o.floorId != null && !floorIds.includes(o.floorId)
+        );
+        const rentPerFloor = occupancyForm.rent / floorIds.length;
+        const depositPerFloor = occupancyForm.securityDeposit / floorIds.length;
+
+        for (const occ of floorsToRemove) {
+          await api.occupancies.vacate(occ.id);
+        }
+        for (const floorId of floorsToAdd) {
+          await api.occupancies.create(propertyId, {
+            tenantId,
+            floorId,
+            rent: rentPerFloor,
+            securityDeposit: depositPerFloor,
+            startDate: occupancyForm.startDate,
+          });
+        }
+        const floorsToUpdate = floorIds.filter((id) => existingFloorIds.has(id));
+        for (const occ of existingOccs) {
+          if (occ.floorId != null && floorsToUpdate.includes(occ.floorId)) {
+            await api.occupancies.update(occ.id, {
+              rent: rentPerFloor,
+              securityDeposit: depositPerFloor,
+              startDate: occupancyForm.startDate,
+            });
+          }
+        }
+        await api.tenants.update(tenantId, {
           name: occupancyForm.name,
           phoneNumber: occupancyForm.phoneNumber,
         });
+        toast({ message: "Occupancy updated.", type: "success" });
       } else {
         const rentPerFloor = occupancyForm.rent / floorIds.length;
         const depositPerFloor =
@@ -545,8 +685,21 @@ export function PropertyDetail() {
 
       {collectModal && (
         <CollectRentModal
+          mode={collectModal.mode}
+          floorCount={collectModal.occupancies?.length}
           rent={collectModal.rent}
           dues={collectModal.dues}
+          totalDue={
+            collectModal.mode === "bulk" && collectModal.occupancies
+              ? collectModal.occupancies.reduce(
+                  (s, o) =>
+                    s +
+                    o.rent +
+                    computeDues(o.rent, paymentsByOccupancy[o.id] ?? [], o.startDate, collectYear, collectMonth),
+                  0
+                )
+              : undefined
+          }
           amount={collectAmount}
           selectedYear={collectYear}
           selectedMonth={collectMonth}
@@ -559,13 +712,26 @@ export function PropertyDetail() {
           onPeriodChange={(y, m) => {
             setCollectYear(y);
             setCollectMonth(m);
-            const total = collectModal.rent + computeDues(collectModal.rent, collectModal.payments, collectModal.startDate, y, m);
+            const total =
+              collectModal.mode === "bulk" && collectModal.occupancies
+                ? collectModal.occupancies.reduce(
+                    (s, o) =>
+                      s +
+                      o.rent +
+                      computeDues(o.rent, paymentsByOccupancy[o.id] ?? [], o.startDate, y, m),
+                    0
+                  )
+                : collectModal.rent +
+                  computeDues(collectModal.rent, collectModal.payments, collectModal.startDate, y, m);
             setCollectAmount(total);
           }}
           onCollectedTodayChange={setCollectCollectedToday}
           onCollectedAtChange={setCollectCollectedAt}
           onSubmit={handleCollect}
           onClose={() => setCollectModal(null)}
+          onSwitchToSingle={
+            collectModal.triggerOcc ? () => switchCollectToSingle(collectModal.triggerOcc!) : undefined
+          }
         />
       )}
 
@@ -590,6 +756,17 @@ export function PropertyDetail() {
             editingOccupancy
               ? floors
               : floors.filter((f) => (occupanciesByFloor[f.id] ?? []).length === 0)
+          }
+          disabledFloorIds={
+            editingOccupancy
+              ? floors
+                  .filter((f) =>
+                    (occupanciesByFloor[f.id] ?? []).some(
+                      (o) => o.tenantId !== editingOccupancy.tenantId
+                    )
+                  )
+                  .map((f) => f.id)
+              : undefined
           }
           form={occupancyForm}
           onFormChange={setOccupancyForm}

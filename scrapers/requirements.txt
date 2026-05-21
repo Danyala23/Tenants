@@ -1,0 +1,4 @@
+requests>=2.31
+beautifulsoup4>=4.12
+ddddocr>=1.5.5
+supabase>=2.0.0

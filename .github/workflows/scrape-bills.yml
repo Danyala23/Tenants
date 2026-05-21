@@ -1,0 +1,35 @@
+name: Scrape utility bills
+
+on:
+  schedule:
+    # LESCO — 5th of month 06:00 UTC
+    - cron: "0 6 5 * *"
+    # SNGPL — 18th of month 06:00 UTC
+    - cron: "0 6 18 * *"
+  workflow_dispatch:
+    inputs:
+      utility_type:
+        description: "Electricity, Gas, or leave empty for both"
+        required: false
+        default: ""
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r scrapers/requirements.txt
+
+      - name: Run bill sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          UTILITY_TYPE: ${{ github.event.inputs.utility_type || '' }}
+        run: python scrapers/sync_bills.py

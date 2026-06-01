@@ -3,10 +3,10 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { TextInput, Button, Text, Switch, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/context/AuthContext';
-import { useThemeMode } from '../../src/context/ThemeContext';
-import { getServerUrl, setServerUrl, normalizeServerUrl } from '../../src/config';
-import { Colors, Spacing, Radius } from '../../src/theme';
+import { useAuth } from '../../../src/context/AuthContext';
+import { useThemeMode } from '../../../src/context/ThemeContext';
+import { getServerUrl, setServerUrl, normalizeServerUrl } from '../../../src/config';
+import { Colors, Spacing, Radius } from '../../../src/theme';
 
 export default function SettingsScreen() {
   const [serverUrl, setServerUrlLocal] = useState('');
@@ -59,7 +59,7 @@ export default function SettingsScreen() {
             label="Server URL"
             value={serverUrl}
             onChangeText={setServerUrlLocal}
-            placeholder="https://your-server.com"
+            placeholder="https://your-app.vercel.app"
             mode="outlined"
             style={styles.input}
             outlineStyle={styles.inputOutline}

@@ -1,5 +1,5 @@
 import { getServerUrl } from './config';
-import { getToken } from './authStorage';
+import { supabase } from './supabase';
 import type {
   Property,
   Floor,
@@ -21,8 +21,12 @@ async function getBaseUrl(): Promise<string> {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = await getToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
   return headers;
 }
 
@@ -32,21 +36,15 @@ async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: { ...(await getAuthHeaders()), ...options?.headers } as HeadersInit,
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? `API error: ${res.status}`);
+  }
   if (res.status === 204) return {} as T;
   return res.json();
 }
 
 export const api = {
-  auth: {
-    login: (username: string, password: string) =>
-      fetchApi<{ success: boolean; username: string; token: string }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-      }),
-    getToken,
-  },
-
   properties: {
     list: () => fetchApi<Property[]>('/properties'),
     get: (id: number) => fetchApi<Property>(`/properties/${id}`),

@@ -58,7 +58,7 @@ Tenants/
 ├── scripts/migrate-from-sqlserver/
 ├── Tenants.Server/           # Legacy ASP.NET API
 ├── tenants.client/           # Legacy Vite React SPA
-└── tenants.mobile/           # Expo mobile app
+├── tenants.mobile/           # Expo mobile app (Supabase auth + tenants-web API)
 ```
 
 ## Bill scraping schedule

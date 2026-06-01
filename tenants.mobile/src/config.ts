@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SERVER_URL_KEY = 'serverUrl';
 
-/** Default server URL used when none is configured. */
-export const DEFAULT_SERVER_URL = 'https://tenants-app-fga3bpcbgtarf0d9.westcentralus-01.azurewebsites.net';
+/** Default Next.js API base URL (tenants-web). Override in Settings or via EXPO_PUBLIC_API_URL. */
+export const DEFAULT_SERVER_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
 export async function getServerUrl(): Promise<string> {
   const url = await AsyncStorage.getItem(SERVER_URL_KEY);

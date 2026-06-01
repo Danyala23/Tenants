@@ -3,14 +3,15 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 're
 import { TextInput, Button, Text, IconButton, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAuth } from './src/context/AuthContext';
-import { useThemeMode } from './src/context/ThemeContext';
-import { getServerUrl, setServerUrl, normalizeServerUrl } from './src/config';
-import { Colors, Spacing, Radius } from './src/theme';
+import { useAuth } from '../src/context/AuthContext';
+import { useThemeMode } from '../src/context/ThemeContext';
+import { getServerUrl, setServerUrl, normalizeServerUrl } from '../src/config';
+import { isSupabaseConfigured } from '../src/supabase';
+import { Colors, Spacing, Radius } from '../src/theme';
 
 export default function LoginScreen() {
   const [serverUrl, setServerUrlLocal] = useState('');
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,17 +44,23 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      const url = await getServerUrl();
-      if (!url) {
-        setShowServerInput(true);
-        setError('Please configure the server URL first');
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to .env');
         setLoading(false);
         return;
       }
-      await login(username, password);
+      const url = await getServerUrl();
+      if (!url) {
+        setShowServerInput(true);
+        setError('Please configure the API server URL first');
+        setLoading(false);
+        return;
+      }
+      await login(email, password);
       router.replace('/(app)');
-    } catch {
-      setError('Invalid username or password');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid email or password';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -116,7 +123,7 @@ export default function LoginScreen() {
                 label="Server URL"
                 value={serverUrl}
                 onChangeText={setServerUrlLocal}
-                placeholder="https://your-server.com"
+                placeholder="https://your-app.vercel.app"
                 mode="outlined"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -161,17 +168,18 @@ export default function LoginScreen() {
                 <Text variant="bodySmall" style={styles.error}>{error}</Text>
               ) : null}
               <TextInput
-                label="Username"
-                value={username}
-                onChangeText={setUsername}
-                placeholder="Enter username"
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Enter email"
                 mode="outlined"
                 autoCapitalize="none"
                 autoCorrect={false}
+                keyboardType="email-address"
                 style={styles.input}
                 outlineStyle={styles.inputOutline}
                 contentStyle={styles.inputContent}
-                left={<TextInput.Icon icon="account-outline" />}
+                left={<TextInput.Icon icon="email-outline" />}
               />
               <TextInput
                 label="Password"

@@ -12,8 +12,8 @@ import { Menu } from 'react-native-paper';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { api } from '../../src/api';
-import { monthLabel } from '../../src/utils/dateUtils';
+import { api } from '../../../src/api';
+import { monthLabel } from '../../../src/utils/dateUtils';
 
 function getMonthsBack(endYear: number, endMonth: number, count: number): { year: number; month: number }[] {
   const result: { year: number; month: number }[] = [];
@@ -37,14 +37,14 @@ function formatCollectedAt(collectedAt: string | null | undefined): string {
     return '—';
   }
 }
-import { Colors, Spacing, Radius } from '../../src/theme';
+import { Colors, Spacing, Radius } from '../../../src/theme';
 import type {
   Tenant,
   Occupancy,
   RentPayment,
   RentIncreaseRule,
-} from '../../src/types';
-import RentIncreaseModal from '../../src/components/RentIncreaseModal';
+} from '../../../src/types';
+import RentIncreaseModal from '../../../src/components/RentIncreaseModal';
 
 export default function TenantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

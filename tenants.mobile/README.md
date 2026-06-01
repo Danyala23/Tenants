@@ -1,112 +1,100 @@
-# Property Manager - Android App
+# Property Manager - Mobile App
 
-React Native + Expo mobile app that mirrors the Property Manager web app. Connects to the same .NET backend API.
+React Native + Expo mobile app for Property Manager. Authenticates with **Supabase** and calls the **Next.js API** in `tenants-web/`.
 
 ## Prerequisites
 
 - Node.js 18+
-- npm or yarn
-- Expo Go app (for testing on device) or Android emulator
+- Expo Go (device testing) or Android emulator
+- A running `tenants-web` deployment (local or Vercel)
+- Supabase project with the schema from `supabase/migrations/001_schema.sql`
 
 ## Setup
 
-1. Install dependencies (already done):
+1. Install dependencies:
+
    ```bash
+   cd tenants.mobile
    npm install
    ```
 
-2. Start the development server:
+2. Configure environment (copy from `tenants-web/.env.local` for Supabase values):
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Fill in:
+
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=
+   EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:3000   # optional default API URL
+   ```
+
+3. Start the web API locally (in another terminal):
+
+   ```bash
+   cd tenants-web
+   npm run dev
+   ```
+
+4. Start Expo:
+
    ```bash
    npm start
    ```
 
-3. Run on Android:
-   - Press `a` in the terminal to open in Android emulator, or
-   - Scan the QR code with Expo Go on your physical device
+5. Run on Android: press `a` in the terminal, or scan the QR code with Expo Go.
 
 ## First Launch
 
-1. **Server URL**: The app uses `https://tenants-app-fga3bpcbgtarf0d9.westcentralus-01.azurewebsites.net` as the default server. You can change it in **Settings** or via "Change Server" on the login screen.
-2. **Login**: Use the same credentials as the web app (default: `admin` / `Admin@123`).
+1. **API URL**: On first launch, enter your `tenants-web` URL (e.g. `http://192.168.x.x:3000` for local dev, or your Vercel URL). You can change it later in **Settings**.
+2. **Login**: Use the same **email and password** as the web app (Supabase Auth user).
 
-## Building & Installing APK on Android
+> On a physical phone, use your computer's LAN IP — `localhost` will not work.
+
+## Building & Installing APK
+
+See [EAS Build](#option-1-eas-build-cloud---recommended) below, or run locally with `npx expo run:android`.
 
 ### Option 1: EAS Build (Cloud - Recommended)
 
-1. **Install EAS CLI**:
-   ```bash
-   npm install -g eas-cli
-   ```
-
-2. **Log in to Expo** (create a free account at [expo.dev](https://expo.dev) if needed):
-   ```bash
-   eas login
-   ```
-
-3. **Configure the project** (first time only):
-   ```bash
-   cd tenants.mobile
-   eas build:configure
-   ```
-   This creates/updates `eas.json` (already present in this project).
-
-4. **Build the APK**:
-   ```bash
-   eas build --platform android --profile preview
-   ```
-   - `preview` profile produces an APK (not AAB) suitable for direct install.
-   - The build runs in the cloud; you’ll get a link to track progress.
-
-5. **Download the APK** when the build finishes (link in terminal or [expo.dev](https://expo.dev) → your project → Builds).
-
-6. **Install on your Android phone**:
-   - **Via link**: Open the build link on your phone and download the APK.
-   - **Via USB**: Copy the APK to your phone and open it.
-   - **Via ADB** (phone connected via USB, USB debugging enabled):
-     ```bash
-     adb install path/to/your-app.apk
-     ```
-   - If prompted, enable **Install from unknown sources** (or **Install unknown apps**) for your browser/file manager in Android Settings.
+1. Install EAS CLI: `npm install -g eas-cli`
+2. Log in: `eas login`
+3. Build: `eas build --platform android --profile preview`
+4. Install the APK from the build link.
 
 ### Option 2: Local Build
 
-Requires Android Studio and Android SDK installed:
-
 ```bash
-cd tenants.mobile
 npx expo prebuild
 npx expo run:android
 ```
-
-This generates the `android/` folder and produces a debug APK in `android/app/build/outputs/apk/debug/`. For a release APK, use:
-
-```bash
-cd android
-./gradlew assembleRelease
-```
-
-The release APK will be in `android/app/build/outputs/apk/release/`.
 
 ## Project Structure
 
 ```
 tenants.mobile/
-├── app/                    # Expo Router screens
-│   ├── _layout.tsx         # Root layout, auth, providers
-│   ├── login.tsx           # Login + server URL config
-│   ├── (app)/              # Authenticated screens
-│   │   ├── (tabs)/         # Dashboard + Settings tabs
-│   │   ├── property/[id]   # Property detail
-│   │   └── tenant/[id]     # Tenant detail
-│   └── src/                # Shared code
-│       ├── api.ts          # API client
-│       ├── config.ts       # Server URL management
-│       ├── types.ts        # TypeScript interfaces
-│       ├── context/        # Auth, Theme, Notifications
-│       └── components/     # Modals, etc.
-├── eas.json                # EAS Build config
-└── app.json                # Expo config
+├── app/                    # Expo Router screens only
+│   ├── _layout.tsx
+│   ├── login.tsx
+│   └── (app)/              # Authenticated screens
+├── src/                    # Shared code (not routes)
+│   ├── api.ts
+│   ├── supabase.ts
+│   ├── config.ts
+│   ├── context/
+│   └── components/
+├── .env.example
+└── eas.json
 ```
+
+## How Auth Works
+
+1. **Supabase** — `signInWithPassword` stores the session in AsyncStorage and refreshes tokens automatically.
+2. **API calls** — Each request to `tenants-web` `/api/*` includes `Authorization: Bearer <access_token>`.
+3. **Web app** — Browser sessions still use cookies; mobile uses Bearer tokens. Both hit the same Supabase-backed API.
 
 ## Features
 
@@ -117,13 +105,3 @@ tenants.mobile/
 - Bills: filter by month, mark paid/unpaid, view snapshot
 - Scrape Now for bill fetching
 - Dark/light theme
-- Server URL configuration
-
-## Sharing Data with Web App
-
-Both the mobile app and web app connect to the same backend API. The mobile app defaults to `https://tenants-app-fga3bpcbgtarf0d9.westcentralus-01.azurewebsites.net`. To use a different server:
-
-1. Web app: Deploy the built `tenants.client/dist` to your server (or serve it from the same host).
-2. Mobile app: Change the server URL in **Settings** or on the login screen.
-
-Both clients use the same JWT authentication and database.

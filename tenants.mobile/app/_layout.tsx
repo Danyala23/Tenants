@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { ThemeProvider, useThemeMode } from './src/context/ThemeContext';
-import { NotificationProvider } from './src/context/NotificationContext';
-import { LightTheme, DarkTheme, Colors } from './src/theme';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { ThemeProvider, useThemeMode } from '../src/context/ThemeContext';
+import { NotificationProvider } from '../src/context/NotificationContext';
+import { LightTheme, DarkTheme, Colors } from '../src/theme';
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();

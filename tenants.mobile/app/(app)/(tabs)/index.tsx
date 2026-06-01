@@ -3,11 +3,11 @@ import { View, FlatList, RefreshControl, StyleSheet, Pressable } from 'react-nat
 import { FAB, Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { api } from '../../src/api';
-import { useNotifications } from '../../src/context/NotificationContext';
-import type { Property, BillSummary } from '../../src/types';
-import PropertyModal from '../../src/components/PropertyModal';
-import { Colors, Spacing, Radius } from '../../src/theme';
+import { api } from '../../../src/api';
+import { useNotifications } from '../../../src/context/NotificationContext';
+import type { Property, BillSummary } from '../../../src/types';
+import PropertyModal from '../../../src/components/PropertyModal';
+import { Colors, Spacing, Radius } from '../../../src/theme';
 
 export default function DashboardScreen() {
   const [properties, setProperties] = useState<Property[]>([]);

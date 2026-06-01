@@ -16,7 +16,7 @@ export default function AppLayout() {
           fontSize: 18,
         },
         headerShadowVisible: false,
-        headerBackTitleVisible: false,
+        headerBackButtonDisplayMode: 'minimal',
         contentStyle: {
           backgroundColor: theme.colors.background,
         },

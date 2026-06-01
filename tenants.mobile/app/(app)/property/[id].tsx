@@ -23,16 +23,16 @@ import {
 } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
-import { api } from "../../src/api";
-import { useNotifications } from "../../src/context/NotificationContext";
+import { api } from "../../../src/api";
+import { useNotifications } from "../../../src/context/NotificationContext";
 import {
   computeDues,
   getUnpaidMonths,
   getUnpaidMonthsBulk,
   computeBulkAllocations,
   monthLabel,
-} from "../../src/utils/dateUtils";
-import { Colors, Spacing, Radius } from "../../src/theme";
+} from "../../../src/utils/dateUtils";
+import { Colors, Spacing, Radius } from "../../../src/theme";
 import type {
   Property,
   Floor,
@@ -41,14 +41,14 @@ import type {
   RentPayment,
   RentIncreaseRule,
   UtilityConnection,
-} from "../../src/types";
-import FloorModal from "../../src/components/FloorModal";
-import TenantModal from "../../src/components/TenantModal";
-import CollectRentModal from "../../src/components/CollectRentModal";
-import RentIncreaseModal from "../../src/components/RentIncreaseModal";
-import UtilityModal from "../../src/components/UtilityModal";
-import BillSnapshotModal from "../../src/components/BillSnapshotModal";
-import { TenantCardWithHistory } from "../../src/components/TenantCardWithHistory";
+} from "../../../src/types";
+import FloorModal from "../../../src/components/FloorModal";
+import TenantModal from "../../../src/components/TenantModal";
+import CollectRentModal from "../../../src/components/CollectRentModal";
+import RentIncreaseModal from "../../../src/components/RentIncreaseModal";
+import UtilityModal from "../../../src/components/UtilityModal";
+import BillSnapshotModal from "../../../src/components/BillSnapshotModal";
+import { TenantCardWithHistory } from "../../../src/components/TenantCardWithHistory";
 
 type TabKey = "overview" | "tenants" | "bills" | "utilities";
 

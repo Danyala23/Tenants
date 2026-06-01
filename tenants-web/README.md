@@ -47,6 +47,10 @@ npm run dev
 
 Open http://localhost:3000 and sign in with your Supabase user email/password.
 
+## Mobile app (`tenants.mobile/`)
+
+The Expo app uses the same Supabase project for login and calls this app's `/api/*` routes with a Bearer token. See [`../tenants.mobile/README.md`](../tenants.mobile/README.md).
+
 ## Deploy to Vercel
 
 1. Import this repo; set **Root Directory** to `tenants-web`

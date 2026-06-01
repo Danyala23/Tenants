@@ -43,7 +43,7 @@ const MoonIcon = () => (
 
 export function Navbar() {
   const router = useRouter();
-  const { theme, toggleTheme } = useThemeMode();
+  const { theme, mounted, toggleTheme } = useThemeMode();
   const [username, setUsername] = useState("");
 
   useEffect(() => {
@@ -74,10 +74,15 @@ export function Navbar() {
             className="theme-toggle"
             onClick={toggleTheme}
             title={
-              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+              mounted
+                ? theme === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+                : "Toggle theme"
             }
+            suppressHydrationWarning
           >
-            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+            {!mounted || theme === "light" ? <MoonIcon /> : <SunIcon />}
           </button>
           {username ? <span className="app-username">{username}</span> : null}
           <button

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useThemeMode } from "@/theme/ThemeProvider";
 
@@ -46,8 +45,7 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { theme, toggleTheme } = useThemeMode();
+  const { theme, mounted, toggleTheme } = useThemeMode();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,8 +56,8 @@ export function Login() {
       if (res.success) {
         sessionStorage.setItem("loggedIn", "true");
         sessionStorage.setItem("username", res.username ?? email);
-        router.push("/");
-        router.refresh();
+        window.location.replace("/");
+        return;
       }
     } catch {
       setError("Invalid email or password");
@@ -75,10 +73,15 @@ export function Login() {
           className="theme-toggle"
           onClick={toggleTheme}
           title={
-            theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+            mounted
+              ? theme === "dark"
+                ? "Switch to light mode"
+                : "Switch to dark mode"
+              : "Toggle theme"
           }
+          suppressHydrationWarning
         >
-          {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+          {!mounted || theme === "light" ? <MoonIcon /> : <SunIcon />}
         </button>
       </div>
       <div className="card auth-card">

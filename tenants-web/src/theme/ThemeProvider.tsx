@@ -7,6 +7,7 @@ type ThemeMode = "light" | "dark";
 
 interface ThemeContextValue {
   theme: ThemeMode;
+  mounted: boolean;
   toggleTheme: () => void;
 }
 
@@ -14,32 +15,44 @@ const STORAGE_KEY = "tenant_theme_mode";
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+function readStoredTheme(): ThemeMode {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored === "light" || stored === "dark") {
+    return stored;
+  }
+
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+
+  return "light";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeMode>("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "light" || stored === "dark") {
-      setTheme(stored);
-      return;
-    }
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    }
+    const stored = readStoredTheme();
+    setTheme(stored);
+    document.documentElement.setAttribute("data-theme", stored);
+    setMounted(true);
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+  }, [theme, mounted]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
+      mounted,
       toggleTheme: () =>
         setTheme((current) => (current === "light" ? "dark" : "light")),
     }),
-    [theme]
+    [theme, mounted]
   );
 
   return (

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import "./globals.scss";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import "@/styles/main.scss";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {

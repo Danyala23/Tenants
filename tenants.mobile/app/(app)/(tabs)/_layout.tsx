@@ -19,7 +19,6 @@ export default function TabsLayout() {
           paddingTop: 8,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           elevation: 0,
-          shadowOpacity: 0,
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -29,7 +28,6 @@ export default function TabsLayout() {
         headerStyle: {
           backgroundColor: theme.colors.surface,
           elevation: 0,
-          shadowOpacity: 0,
         },
         headerTintColor: theme.colors.onSurface,
         headerTitleStyle: {

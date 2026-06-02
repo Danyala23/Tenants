@@ -1,3 +1,4 @@
+import '../src/setup/webCompat';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';

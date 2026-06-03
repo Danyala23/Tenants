@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
+import { getAppConfigIssues, hasBlockingConfigIssues } from '../src/appConfig';
+import { ConfigErrorScreen } from '../src/components/ConfigErrorScreen';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { ThemeProvider, useThemeMode } from '../src/context/ThemeContext';
 import { NotificationProvider } from '../src/context/NotificationContext';
@@ -50,6 +52,14 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  if (hasBlockingConfigIssues()) {
+    return (
+      <ThemeProvider>
+        <ConfigErrorScreen issues={getAppConfigIssues()} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider>
       <AuthProvider>

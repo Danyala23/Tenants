@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { supabase, isSupabaseConfigured } from "../supabase";
+import { isSupabaseConfigured, getSupabaseClient } from "../supabase";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -17,6 +17,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
+      setIsLoading(false);
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
       setIsLoading(false);
       return;
     }
@@ -39,6 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) {
       throw new Error("Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.");
     }
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      throw new Error("Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.");
+    }
     const { data, error } = await supabase.auth.signInWithPassword({
       email: userEmail.trim(),
       password,
@@ -50,7 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setEmail(null);
   }, []);
 

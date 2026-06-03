@@ -1,5 +1,5 @@
 import { getServerUrl } from './config';
-import { supabase } from './supabase';
+import { getSupabaseClient } from './supabase';
 import type {
   Property,
   Floor,
@@ -21,11 +21,14 @@ async function getBaseUrl(): Promise<string> {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
   }
   return headers;
 }

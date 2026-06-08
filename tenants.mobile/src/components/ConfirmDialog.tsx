@@ -1,4 +1,5 @@
-import { Dialog, Portal, Button } from 'react-native-paper';
+import { Dialog, Portal, Button, Text } from 'react-native-paper';
+import { Colors } from '../theme';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -23,16 +24,18 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Portal>
-      <Dialog visible={visible} onDismiss={onCancel}>
+      <Dialog visible={visible} onDismiss={onCancel} style={{ borderRadius: 22 }}>
         {title ? <Dialog.Title>{title}</Dialog.Title> : null}
         <Dialog.Content>
-          {message}
+          <Text variant="bodyMedium">{message}</Text>
         </Dialog.Content>
         <Dialog.Actions>
           <Button onPress={onCancel}>{cancelLabel}</Button>
           <Button
             onPress={onConfirm}
-            textColor={variant === 'danger' ? '#d32f2f' : undefined}
+            mode={variant === 'danger' ? 'contained' : 'contained-tonal'}
+            buttonColor={variant === 'danger' ? Colors.error : undefined}
+            textColor={variant === 'danger' ? '#FFFFFF' : undefined}
           >
             {confirmLabel}
           </Button>

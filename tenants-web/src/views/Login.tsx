@@ -86,19 +86,17 @@ export function Login() {
       </div>
       <div className="card auth-card">
         <div className="card-body p-4 p-md-5">
+          <span className="brand-mark auth-brand-mark mb-3" aria-hidden>
+            <i className="bi bi-houses" />
+          </span>
           <h3 className="card-title text-center mb-1">
-            <i
-              className="bi bi-building d-block mb-2"
-              style={{ fontSize: "2.5rem" }}
-              aria-hidden
-            />
-            Property Manager
+            Welcome to <span className="brand-gradient-text">Haven</span>
           </h3>
           <p
             className="text-center text-muted mb-4"
-            style={{ fontSize: "0.875rem" }}
+            style={{ fontSize: "0.9rem" }}
           >
-            Sign in to your account
+            Sign in to manage your properties &amp; tenants
           </p>
           <form onSubmit={handleSubmit}>
             {error && (

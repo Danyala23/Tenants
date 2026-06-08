@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ActivityIndicator,
+} from 'react-native';
 import { TextInput, Button, Text, IconButton, useTheme } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../src/context/AuthContext';
 import { useThemeMode } from '../src/context/ThemeContext';
 import { getServerUrl, setServerUrl, normalizeServerUrl } from '../src/config';
 import { isSupabaseConfigured } from '../src/supabase';
-import { Colors, Spacing, Radius } from '../src/theme';
+import { Colors, Spacing, Radius, Gradients, FontFamily } from '../src/theme';
 
 export default function LoginScreen() {
   const [serverUrl, setServerUrlLocal] = useState('');
@@ -66,153 +75,197 @@ export default function LoginScreen() {
     }
   }
 
-  return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <IconButton
-            icon={isDark ? 'white-balance-sunny' : 'moon-waning-crescent'}
-            onPress={toggleTheme}
-            size={22}
-            iconColor={theme.colors.onSurfaceVariant}
-          />
-        </View>
+  const gradientBrand = isDark ? Gradients.brandDark : Gradients.brand;
+  const gradientPrimary = isDark ? Gradients.primaryDark : Gradients.primary;
+  const aurora = isDark ? Gradients.auroraDark : Gradients.auroraLight;
 
-        <View style={styles.brandSection}>
-          <View style={[styles.iconCircle, { backgroundColor: Colors.primarySurface }]}>
-            <MaterialCommunityIcons
-              name="home-city"
-              size={40}
-              color={Colors.primary}
+  return (
+    <View style={styles.root}>
+      <LinearGradient
+        colors={aurora}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <IconButton
+              icon={isDark ? 'white-balance-sunny' : 'moon-waning-crescent'}
+              onPress={toggleTheme}
+              size={22}
+              iconColor={theme.colors.onSurfaceVariant}
             />
           </View>
-          <Text
-            variant="headlineMedium"
-            style={[styles.brandTitle, { color: theme.colors.onBackground }]}
-          >
-            Property Manager
-          </Text>
-          <Text
-            variant="bodyMedium"
-            style={[styles.brandSubtitle, { color: theme.colors.onSurfaceVariant }]}
-          >
-            Manage your properties with ease
-          </Text>
-        </View>
 
-        <View style={[styles.formCard, {
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.outlineVariant,
-        }]}>
-          {showServerInput ? (
-            <>
-              <Text
-                variant="titleMedium"
-                style={[styles.formTitle, { color: theme.colors.onSurface }]}
-              >
-                Server Configuration
-              </Text>
-              <TextInput
-                label="Server URL"
-                value={serverUrl}
-                onChangeText={setServerUrlLocal}
-                placeholder="https://your-app.vercel.app"
-                mode="outlined"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
-                contentStyle={styles.inputContent}
-                left={<TextInput.Icon icon="server-network" />}
-              />
-              {error ? (
-                <Text variant="bodySmall" style={styles.error}>{error}</Text>
-              ) : null}
-              <Button
-                mode="contained"
-                onPress={handleSaveServerUrl}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-                labelStyle={styles.buttonLabel}
-              >
-                Save & Continue
-              </Button>
-            </>
-          ) : (
-            <>
-              <Text
-                variant="titleMedium"
-                style={[styles.formTitle, { color: theme.colors.onSurface }]}
-              >
-                Welcome back
-              </Text>
-              <Button
-                mode="text"
-                compact
-                onPress={() => setShowServerInput(true)}
-                style={styles.serverLink}
-                labelStyle={styles.serverLinkLabel}
-                icon="server-network"
-              >
-                Change Server
-              </Button>
-              {error ? (
-                <Text variant="bodySmall" style={styles.error}>{error}</Text>
-              ) : null}
-              <TextInput
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Enter email"
-                mode="outlined"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
-                contentStyle={styles.inputContent}
-                left={<TextInput.Icon icon="email-outline" />}
-              />
-              <TextInput
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter password"
-                mode="outlined"
-                secureTextEntry
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
-                contentStyle={styles.inputContent}
-                left={<TextInput.Icon icon="lock-outline" />}
-              />
-              <Button
-                mode="contained"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={loading}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-                labelStyle={styles.buttonLabel}
-              >
-                Sign In
-              </Button>
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={styles.brandSection}>
+            <LinearGradient
+              colors={gradientBrand}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.brandMark}
+            >
+              <MaterialCommunityIcons name="home-city" size={40} color="#FFFFFF" />
+            </LinearGradient>
+            <Text style={[styles.brandTitle, { color: theme.colors.onBackground }]}>
+              Haven
+            </Text>
+            <Text style={[styles.brandSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+              Your properties, beautifully managed
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.formCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outlineVariant,
+              },
+            ]}
+          >
+            {showServerInput ? (
+              <>
+                <Text style={[styles.formTitle, { color: theme.colors.onSurface }]}>
+                  Server configuration
+                </Text>
+                <TextInput
+                  label="Server URL"
+                  value={serverUrl}
+                  onChangeText={setServerUrlLocal}
+                  placeholder="https://your-app.vercel.app"
+                  mode="outlined"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  style={styles.input}
+                  outlineStyle={styles.inputOutline}
+                  contentStyle={styles.inputContent}
+                  left={<TextInput.Icon icon="server-network" />}
+                />
+                {error ? (
+                  <Text style={styles.error}>{error}</Text>
+                ) : null}
+                <GradientButton
+                  label="Save & Continue"
+                  colors={gradientPrimary}
+                  onPress={handleSaveServerUrl}
+                />
+              </>
+            ) : (
+              <>
+                <Text style={[styles.formTitle, { color: theme.colors.onSurface }]}>
+                  Welcome back
+                </Text>
+                <Button
+                  mode="text"
+                  compact
+                  onPress={() => setShowServerInput(true)}
+                  style={styles.serverLink}
+                  labelStyle={styles.serverLinkLabel}
+                  icon="server-network"
+                >
+                  Change Server
+                </Button>
+                {error ? (
+                  <Text style={styles.error}>{error}</Text>
+                ) : null}
+                <TextInput
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter email"
+                  mode="outlined"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  style={styles.input}
+                  outlineStyle={styles.inputOutline}
+                  contentStyle={styles.inputContent}
+                  left={<TextInput.Icon icon="email-outline" />}
+                />
+                <TextInput
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter password"
+                  mode="outlined"
+                  secureTextEntry
+                  style={styles.input}
+                  outlineStyle={styles.inputOutline}
+                  contentStyle={styles.inputContent}
+                  left={<TextInput.Icon icon="lock-outline" />}
+                />
+                <GradientButton
+                  label="Sign In"
+                  colors={gradientPrimary}
+                  onPress={handleLogin}
+                  loading={loading}
+                  icon="arrow-right"
+                />
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+function GradientButton({
+  label,
+  colors,
+  onPress,
+  loading,
+  icon,
+}: {
+  label: string;
+  colors: readonly [string, string, ...string[]];
+  onPress: () => void;
+  loading?: boolean;
+  icon?: keyof typeof MaterialCommunityIcons.glyphMap;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={loading}
+      style={({ pressed }) => [
+        styles.gradientButtonWrap,
+        { opacity: pressed || loading ? 0.9 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
+      ]}
+    >
+      <LinearGradient
+        colors={colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradientButton}
+      >
+        {loading ? (
+          <ActivityIndicator color="#FFFFFF" size="small" />
+        ) : (
+          <>
+            <Text style={styles.gradientButtonLabel}>{label}</Text>
+            {icon ? (
+              <MaterialCommunityIcons name={icon} size={18} color="#FFFFFF" />
+            ) : null}
+          </>
+        )}
+      </LinearGradient>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -231,50 +284,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xxxl,
   },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  brandMark: {
+    width: 84,
+    height: 84,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.lg,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
   },
   brandTitle: {
-    fontWeight: '700',
+    fontFamily: FontFamily.display,
+    fontSize: 32,
+    letterSpacing: -0.5,
     marginBottom: Spacing.xs,
   },
   brandSubtitle: {
-    opacity: 0.8,
+    fontFamily: FontFamily.medium,
+    fontSize: 14,
+    opacity: 0.85,
   },
   formCard: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.xxl,
     borderWidth: 1,
+    shadowColor: '#1B1530',
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 4,
   },
   formTitle: {
-    fontWeight: '600',
+    fontFamily: FontFamily.displaySemi,
+    fontSize: 20,
     marginBottom: Spacing.xs,
   },
   input: {
     marginBottom: Spacing.md,
   },
   inputOutline: {
-    borderRadius: Radius.sm,
+    borderRadius: Radius.md,
   },
   inputContent: {
     paddingLeft: 12,
-  },
-  button: {
-    marginTop: Spacing.sm,
-    borderRadius: Radius.sm,
-  },
-  buttonContent: {
-    height: 48,
-  },
-  buttonLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontFamily: FontFamily.regular,
   },
   serverLink: {
     alignSelf: 'flex-start',
@@ -282,10 +339,31 @@ const styles = StyleSheet.create({
   },
   serverLinkLabel: {
     fontSize: 12,
+    fontFamily: FontFamily.semibold,
   },
   error: {
     color: Colors.error,
     marginBottom: Spacing.md,
     fontSize: 13,
+    fontFamily: FontFamily.medium,
+  },
+  gradientButtonWrap: {
+    marginTop: Spacing.sm,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+  },
+  gradientButton: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: Radius.md,
+  },
+  gradientButtonLabel: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.3,
   },
 });

@@ -1,5 +1,6 @@
 import { Card, Text, Button } from 'react-native-paper';
 import type { Property, BillSummary } from '../types';
+import { Colors } from '../theme';
 
 interface PropertyCardProps {
   property: Property;
@@ -27,7 +28,7 @@ export function PropertyCard({ property, billSummary, onView, onEdit, onDelete }
             variant="labelMedium"
             style={{
               marginTop: 8,
-              color: unpaidCount > 0 ? '#d32f2f' : '#2e7d32',
+              color: unpaidCount > 0 ? Colors.error : Colors.success,
             }}
           >
             {unpaidCount > 0
@@ -38,7 +39,7 @@ export function PropertyCard({ property, billSummary, onView, onEdit, onDelete }
         <Card.Actions>
           <Button onPress={onView}>View</Button>
           <Button onPress={onEdit}>Edit</Button>
-          <Button onPress={onDelete} textColor="#d32f2f">
+          <Button onPress={onDelete} textColor={Colors.error}>
             Delete
           </Button>
         </Card.Actions>

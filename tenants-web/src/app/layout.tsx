@@ -5,8 +5,8 @@ import "@/styles/main.scss";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Property Manager",
-  description: "Property and tenant management with utility bill tracking",
+  title: "Haven · Property Manager",
+  description: "Manage your properties, tenants and utility bills in one place",
 };
 
 export default function RootLayout({

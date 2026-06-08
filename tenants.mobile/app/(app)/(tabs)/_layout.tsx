@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { Platform } from 'react-native';
+import { FontFamily } from '../../../src/theme';
 
 export default function TabsLayout() {
   const theme = useTheme();
@@ -15,15 +16,18 @@ export default function TabsLayout() {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.outlineVariant,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          height: Platform.OS === 'ios' ? 90 : 68,
+          paddingTop: 10,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 10,
           elevation: 0,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
-          marginTop: 2,
+          fontFamily: FontFamily.semibold,
+          marginTop: 3,
+        },
+        tabBarItemStyle: {
+          borderRadius: 12,
         },
         headerStyle: {
           backgroundColor: theme.colors.surface,
@@ -31,8 +35,8 @@ export default function TabsLayout() {
         },
         headerTintColor: theme.colors.onSurface,
         headerTitleStyle: {
-          fontWeight: '700',
-          fontSize: 20,
+          fontFamily: FontFamily.display,
+          fontSize: 22,
         },
         headerShadowVisible: false,
       }}
@@ -42,8 +46,12 @@ export default function TabsLayout() {
         options={{
           title: 'Properties',
           headerTitle: 'My Properties',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home-city-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'home-city' : 'home-city-outline'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -51,8 +59,12 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cog-outline" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'cog' : 'cog-outline'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

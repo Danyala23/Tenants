@@ -102,32 +102,43 @@ export function TenantDetail() {
 
   if (loading || !tenant) {
     return (
-      <div className="container py-5">
-        <p className="text-muted">
-          {loading ? "Loading..." : "Tenant not found"}
-        </p>
+      <div className="container py-4 page page-tenant-detail">
+        {loading ? (
+          <div className="loading-page">
+            <span className="spinner-ring" aria-hidden />
+            <span>Loading tenant…</span>
+          </div>
+        ) : (
+          <p className="text-muted">Tenant not found</p>
+        )}
       </div>
     );
   }
 
   return (
     <div className="container py-4 page page-tenant-detail">
-      <button
-        className="btn btn-link text-decoration-none p-0 mb-3"
-        onClick={() => router.back()}
-      >
+      <button className="btn btn-back mb-3" onClick={() => router.back()}>
         <i className="bi bi-arrow-left" aria-hidden /> Back
       </button>
-      <h2 className="d-inline-flex align-items-center gap-2">
-        <i className="bi bi-person" aria-hidden />
-        {tenant.name}
-      </h2>
-      <p className="text-muted d-inline-flex align-items-center gap-1">
-        <i className="bi bi-telephone" aria-hidden />
-        {tenant.phoneNumber}
-      </p>
+      <div className="property-header mb-4">
+        <span className="avatar-gradient avatar-lg" aria-hidden>
+          {tenant.name.charAt(0).toUpperCase()}
+        </span>
+        <div className="flex-grow-1">
+          <h2 className="mb-0">{tenant.name}</h2>
+          {tenant.phoneNumber ? (
+            <a
+              href={`tel:${tenant.phoneNumber}`}
+              className="card-text mb-0 d-inline-flex align-items-center gap-1 text-decoration-none"
+            >
+              <i className="bi bi-telephone" aria-hidden />
+              {tenant.phoneNumber}
+            </a>
+          ) : null}
+        </div>
+      </div>
 
-      <h5 className="mt-4 section-heading">
+      <h5 className="mt-4 mb-3 section-heading">
         <i className="bi bi-layers" aria-hidden />
         Occupancies (Floors)
       </h5>

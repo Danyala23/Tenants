@@ -2,12 +2,14 @@ import { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, RefreshControl, StyleSheet, Pressable } from 'react-native';
 import { FAB, Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useThemeMode } from '../../../src/context/ThemeContext';
 import { api } from '../../../src/api';
 import { useNotifications } from '../../../src/context/NotificationContext';
 import type { Property, BillSummary } from '../../../src/types';
 import PropertyModal from '../../../src/components/PropertyModal';
-import { Colors, Spacing, Radius } from '../../../src/theme';
+import { Colors, Spacing, Radius, Gradients, FontFamily } from '../../../src/theme';
 
 export default function DashboardScreen() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -19,6 +21,8 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { toast, confirm } = useNotifications();
   const theme = useTheme();
+  const { theme: themeMode } = useThemeMode();
+  const isDark = themeMode === 'dark';
 
   const loadData = useCallback(async () => {
     try {
@@ -110,6 +114,14 @@ export default function DashboardScreen() {
     const hasUnpaid = summary && summary.unpaidCount > 0;
     const allPaid = summary && summary.totalCount > 0 && summary.unpaidCount === 0;
 
+    const tileColors = hasUnpaid
+      ? Gradients.danger
+      : allPaid
+      ? Gradients.success
+      : isDark
+      ? Gradients.primaryDark
+      : Gradients.primary;
+
     return (
       <Pressable
         onPress={() => router.push(`/(app)/property/${item.id}`)}
@@ -118,94 +130,120 @@ export default function DashboardScreen() {
           styles.card,
           {
             backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.outlineVariant,
+            borderColor: pressed ? theme.colors.primary : theme.colors.outlineVariant,
             transform: [{ scale: pressed ? 0.98 : 1 }],
           },
         ]}
       >
-        <View style={styles.cardBody}>
-          <View style={[styles.cardAccent, {
-            backgroundColor: hasUnpaid ? Colors.error : allPaid ? Colors.success : theme.colors.primary,
-          }]} />
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <LinearGradient
+              colors={tileColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardTile}
+            >
+              <MaterialCommunityIcons name="home-variant" size={22} color="#FFFFFF" />
+            </LinearGradient>
+            <View style={styles.cardHeadText}>
               <Text
-                variant="titleMedium"
                 style={[styles.cardTitle, { color: theme.colors.onSurface }]}
                 numberOfLines={1}
               >
                 {item.houseNumber || item.address || `Property #${item.id}`}
               </Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={22}
-                color={theme.colors.onSurfaceVariant}
-              />
-            </View>
-
-            {item.address ? (
-              <View style={styles.infoRow}>
-                <MaterialCommunityIcons
-                  name="map-marker-outline"
-                  size={14}
-                  color={theme.colors.onSurfaceVariant}
-                />
-                <Text
-                  variant="bodySmall"
-                  style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}
-                  numberOfLines={1}
-                >
-                  {item.address}
-                </Text>
-              </View>
-            ) : null}
-
-            <View style={styles.cardFooter}>
-              <Chip
-                compact
-                textStyle={styles.chipText}
-                style={[styles.chip, { backgroundColor: theme.colors.surfaceVariant }]}
-                icon={() => (
+              {item.address ? (
+                <View style={styles.infoRow}>
                   <MaterialCommunityIcons
-                    name="ruler-square"
+                    name="map-marker-outline"
                     size={13}
                     color={theme.colors.onSurfaceVariant}
                   />
-                )}
-              >
-                {item.size} Marlas
-              </Chip>
-
-              {summary && summary.totalCount > 0 ? (
-                <Chip
-                  compact
-                  textStyle={[
-                    styles.chipText,
-                    { color: hasUnpaid ? Colors.errorDark : Colors.successDark },
-                  ]}
-                  style={[
-                    styles.chip,
-                    { backgroundColor: hasUnpaid ? Colors.errorLight : Colors.successLight },
-                  ]}
-                  icon={() => (
-                    <MaterialCommunityIcons
-                      name={hasUnpaid ? 'alert-circle-outline' : 'check-circle-outline'}
-                      size={13}
-                      color={hasUnpaid ? Colors.errorDark : Colors.successDark}
-                    />
-                  )}
-                >
-                  {hasUnpaid
-                    ? `${summary.unpaidCount} unpaid`
-                    : 'All paid'}
-                </Chip>
+                  <Text
+                    style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}
+                    numberOfLines={1}
+                  >
+                    {item.address}
+                  </Text>
+                </View>
               ) : null}
             </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={22}
+              color={theme.colors.onSurfaceVariant}
+            />
+          </View>
+
+          <View style={styles.cardFooter}>
+            <Chip
+              compact
+              textStyle={styles.chipText}
+              style={[styles.chip, { backgroundColor: theme.colors.surfaceVariant }]}
+              icon={() => (
+                <MaterialCommunityIcons
+                  name="ruler-square"
+                  size={13}
+                  color={theme.colors.onSurfaceVariant}
+                />
+              )}
+            >
+              {item.size} Marlas
+            </Chip>
+
+            {summary && summary.totalCount > 0 ? (
+              <Chip
+                compact
+                textStyle={[
+                  styles.chipText,
+                  { color: hasUnpaid ? Colors.errorDark : Colors.successDark },
+                ]}
+                style={[
+                  styles.chip,
+                  { backgroundColor: hasUnpaid ? Colors.errorLight : Colors.successLight },
+                ]}
+                icon={() => (
+                  <MaterialCommunityIcons
+                    name={hasUnpaid ? 'alert-circle-outline' : 'check-circle-outline'}
+                    size={13}
+                    color={hasUnpaid ? Colors.errorDark : Colors.successDark}
+                  />
+                )}
+              >
+                {hasUnpaid ? `${summary.unpaidCount} unpaid` : 'All paid'}
+              </Chip>
+            ) : null}
           </View>
         </View>
       </Pressable>
     );
   };
+
+  const totalUnpaid = billSummaries.reduce((s, x) => s + (x.unpaidCount ?? 0), 0);
+  const attentionCount = billSummaries.filter((x) => (x.unpaidCount ?? 0) > 0).length;
+
+  const ListHeader = () => (
+    <View style={styles.statRow}>
+      <StatPill
+        icon="office-building-marker"
+        value={properties.length}
+        label="Properties"
+        tone={isDark ? Gradients.primaryDark : Gradients.primary}
+      />
+      <StatPill
+        icon="receipt"
+        value={totalUnpaid}
+        label="Unpaid"
+        tone={Gradients.danger}
+      />
+      <StatPill
+        icon="check-decagram"
+        value={properties.length - attentionCount}
+        label="Settled"
+        tone={Gradients.success}
+      />
+    </View>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -235,6 +273,7 @@ export default function DashboardScreen() {
           data={properties}
           keyExtractor={(p) => String(p.id)}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={ListHeader}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -270,6 +309,39 @@ export default function DashboardScreen() {
   );
 }
 
+function StatPill({
+  icon,
+  value,
+  label,
+  tone,
+}: {
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  value: number;
+  label: string;
+  tone: readonly [string, string, ...string[]];
+}) {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.statPill,
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+      ]}
+    >
+      <LinearGradient
+        colors={tone}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.statIcon}
+      >
+        <MaterialCommunityIcons name={icon} size={16} color="#FFFFFF" />
+      </LinearGradient>
+      <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -281,18 +353,43 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: Spacing.lg,
-    paddingBottom: 80,
+    paddingBottom: 96,
+  },
+  statRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  statPill: {
+    flex: 1,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.md,
+  },
+  statIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  statValue: {
+    fontFamily: FontFamily.display,
+    fontSize: 22,
+    lineHeight: 24,
+  },
+  statLabel: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginTop: 2,
   },
   card: {
     borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: 'hidden',
-  },
-  cardBody: {
-    flexDirection: 'row',
-  },
-  cardAccent: {
-    width: 4,
   },
   cardContent: {
     flex: 1,
@@ -300,22 +397,33 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  cardTile: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  cardTitle: {
-    fontWeight: '600',
+  cardHeadText: {
     flex: 1,
-    marginRight: Spacing.sm,
+  },
+  cardTitle: {
+    fontFamily: FontFamily.displaySemi,
+    fontSize: 16,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacing.xs,
+    marginTop: 3,
     gap: Spacing.xs,
   },
   infoText: {
     flex: 1,
+    fontFamily: FontFamily.regular,
+    fontSize: 12,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -329,6 +437,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 11,
     marginVertical: 0,
+    fontFamily: FontFamily.semibold,
   },
   fab: {
     position: 'absolute',
@@ -344,11 +453,13 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     marginTop: Spacing.lg,
-    fontWeight: '600',
+    fontFamily: FontFamily.displaySemi,
+    fontSize: 18,
   },
   emptySubtitle: {
     marginTop: Spacing.sm,
     opacity: 0.7,
     textAlign: 'center',
+    fontFamily: FontFamily.regular,
   },
 });

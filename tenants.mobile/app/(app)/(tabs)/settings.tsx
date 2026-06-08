@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { TextInput, Button, Text, Switch, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../src/context/AuthContext';
 import { useThemeMode } from '../../../src/context/ThemeContext';
 import { getServerUrl, setServerUrl, normalizeServerUrl } from '../../../src/config';
-import { Colors, Spacing, Radius } from '../../../src/theme';
+import { Colors, Spacing, Radius, Gradients, FontFamily } from '../../../src/theme';
 
 export default function SettingsScreen() {
   const [serverUrl, setServerUrlLocal] = useState('');
@@ -39,6 +40,22 @@ export default function SettingsScreen() {
       style={{ backgroundColor: theme.colors.background }}
       contentContainerStyle={styles.container}
     >
+      {/* Brand hero */}
+      <LinearGradient
+        colors={isDark ? Gradients.brandDark : Gradients.brand}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <View style={styles.heroMark}>
+          <MaterialCommunityIcons name="home-city" size={26} color="#FFFFFF" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.heroTitle}>Haven</Text>
+          <Text style={styles.heroSubtitle}>Property &amp; tenant manager</Text>
+        </View>
+      </LinearGradient>
+
       {/* Server Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -169,6 +186,38 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,
   },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    marginBottom: Spacing.xxl,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  heroMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroTitle: {
+    fontFamily: FontFamily.display,
+    fontSize: 24,
+    color: '#FFFFFF',
+  },
+  heroSubtitle: {
+    fontFamily: FontFamily.medium,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+  },
   section: {
     marginBottom: Spacing.xxl,
   },
@@ -180,7 +229,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   sectionTitle: {
-    fontWeight: '600',
+    fontFamily: FontFamily.displaySemi,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontSize: 12,
   },
   card: {
     borderRadius: Radius.lg,

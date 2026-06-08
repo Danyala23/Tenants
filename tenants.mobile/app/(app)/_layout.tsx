@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { useTheme } from 'react-native-paper';
+import { FontFamily } from '../../src/theme';
 
 export default function AppLayout() {
   const theme = useTheme();
@@ -12,8 +13,8 @@ export default function AppLayout() {
         },
         headerTintColor: theme.colors.onSurface,
         headerTitleStyle: {
-          fontWeight: '600',
-          fontSize: 18,
+          fontFamily: FontFamily.displaySemi,
+          fontSize: 19,
         },
         headerShadowVisible: false,
         headerBackButtonDisplayMode: 'minimal',

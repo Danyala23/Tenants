@@ -90,19 +90,31 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="container py-5">
-        <p className="text-muted">Loading...</p>
+      <div className="container py-4 page page-dashboard">
+        <div className="loading-page">
+          <span className="spinner-ring" aria-hidden />
+          <span>Loading your properties…</span>
+        </div>
       </div>
     );
   }
 
+  const summaries = Object.values(billSummaryByProperty);
+  const totalUnpaid = summaries.reduce((s, x) => s + (x.unpaidCount ?? 0), 0);
+  const attentionCount = summaries.filter((x) => (x.unpaidCount ?? 0) > 0).length;
+
   return (
     <div className="container py-4 page page-dashboard">
-      <div className="d-flex justify-content-between align-items-center mb-4 page-header">
-        <h2 className="d-inline-flex align-items-center gap-2">
-          <i className="bi bi-building" aria-hidden />
-          Properties
-        </h2>
+      <div className="d-flex justify-content-between align-items-start mb-4 page-header gap-3 flex-wrap">
+        <div>
+          <h2 className="page-title">
+            <i className="bi bi-houses" aria-hidden />
+            Properties
+          </h2>
+          <p className="page-subtitle">
+            Manage your portfolio, tenants and utility bills in one place.
+          </p>
+        </div>
         <button className="btn btn-primary btn-glow" onClick={openCreate}>
           <i className="bi bi-plus-lg" aria-hidden /> Add Property
         </button>
@@ -110,72 +122,121 @@ export function Dashboard() {
 
       {error && !showModal && <div className="alert alert-danger">{error}</div>}
 
+      {properties.length > 0 && (
+        <div className="stat-grid">
+          <div className="stat-card">
+            <span className="stat-icon tone-primary">
+              <i className="bi bi-buildings" aria-hidden />
+            </span>
+            <div className="stat-value">{properties.length}</div>
+            <div className="stat-label">Properties</div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon tone-danger">
+              <i className="bi bi-receipt" aria-hidden />
+            </span>
+            <div className="stat-value">{totalUnpaid}</div>
+            <div className="stat-label">Unpaid bills</div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon tone-accent">
+              <i className="bi bi-exclamation-triangle" aria-hidden />
+            </span>
+            <div className="stat-value">{attentionCount}</div>
+            <div className="stat-label">Need attention</div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon tone-success">
+              <i className="bi bi-check2-circle" aria-hidden />
+            </span>
+            <div className="stat-value">{properties.length - attentionCount}</div>
+            <div className="stat-label">All settled</div>
+          </div>
+        </div>
+      )}
+
       <div className="row g-3">
-        {properties.map((p) => (
-          <div key={p.id} className="col-md-6 col-lg-4">
-            <div className="card h-100 app-card">
-              <div className="card-body">
-                <h5 className="card-title d-inline-flex align-items-center gap-1 mb-1">
-                  <i
-                    className="bi bi-house-door text-muted"
-                    aria-hidden
-                  />
-                  {p.houseNumber} — {p.address}
-                </h5>
-                <p className="card-text text-muted small d-inline-flex align-items-center gap-1 mb-2">
-                  <i className="bi bi-arrows-angle-expand" aria-hidden />
-                  {p.size} Marla{p.size !== 1 ? "s" : ""}
-                </p>
-                {(() => {
-                  const summary = billSummaryByProperty[p.id];
-                  if (summary && summary.totalCount > 0) {
-                    return (
-                      <div className="mb-2">
-                        {summary.unpaidCount > 0 ? (
-                          <span className="badge bg-danger">
-                            <i className="bi bi-exclamation-circle" aria-hidden />{" "}
-                            {summary.unpaidCount} unpaid bill
-                            {summary.unpaidCount !== 1 ? "s" : ""}
-                          </span>
-                        ) : (
-                          <span className="badge bg-success">
-                            <i className="bi bi-check-circle" aria-hidden /> All
-                            paid
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-                <div className="d-flex gap-2 mt-3">
-                  <button
-                    className="btn btn-sm btn-primary"
-                    onClick={() => router.push(`/properties/${p.id}`)}
-                  >
-                    <i className="bi bi-eye" aria-hidden /> View
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline-secondary"
-                    onClick={() => openEdit(p)}
-                  >
-                    <i className="bi bi-pencil" aria-hidden /> Edit
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={() => handleDelete(p.id)}
-                  >
-                    <i className="bi bi-trash" aria-hidden /> Delete
-                  </button>
+        {properties.map((p) => {
+          const summary = billSummaryByProperty[p.id];
+          const hasUnpaid = summary && summary.unpaidCount > 0;
+          return (
+            <div key={p.id} className="col-md-6 col-lg-4">
+              <div className="card h-100 app-card">
+                <div className="card-body d-flex flex-column">
+                  <div className="d-flex align-items-start gap-3 mb-2">
+                    <span className="stat-icon tone-primary mb-0 flex-shrink-0">
+                      <i className="bi bi-house-door" aria-hidden />
+                    </span>
+                    <div className="flex-grow-1 min-w-0">
+                      <h5 className="card-title mb-1">{p.houseNumber}</h5>
+                      <p className="card-text text-muted small mb-0 d-inline-flex align-items-center gap-1">
+                        <i className="bi bi-geo-alt" aria-hidden />
+                        {p.address}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="d-flex flex-wrap gap-2 mb-3">
+                    <span className="badge bg-secondary">
+                      <i className="bi bi-rulers" aria-hidden />
+                      {p.size} Marla{p.size !== 1 ? "s" : ""}
+                    </span>
+                    {summary && summary.totalCount > 0 ? (
+                      hasUnpaid ? (
+                        <span className="badge bg-danger">
+                          <i className="bi bi-exclamation-circle" aria-hidden />
+                          {summary.unpaidCount} unpaid
+                        </span>
+                      ) : (
+                        <span className="badge bg-success">
+                          <i className="bi bi-check-circle" aria-hidden /> All paid
+                        </span>
+                      )
+                    ) : null}
+                  </div>
+
+                  <div className="d-flex gap-2 mt-auto">
+                    <button
+                      className="btn btn-sm btn-primary flex-grow-1"
+                      onClick={() => router.push(`/properties/${p.id}`)}
+                    >
+                      <i className="bi bi-arrow-right-circle" aria-hidden /> Open
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => openEdit(p)}
+                      title="Edit property"
+                      aria-label="Edit property"
+                    >
+                      <i className="bi bi-pencil" aria-hidden />
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handleDelete(p.id)}
+                      title="Delete property"
+                      aria-label="Delete property"
+                    >
+                      <i className="bi bi-trash" aria-hidden />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {properties.length === 0 && (
-        <p className="text-muted">No properties yet. Add one to get started.</p>
+        <div className="empty-state">
+          <span className="empty-state-icon">
+            <i className="bi bi-houses" aria-hidden />
+          </span>
+          <h5 className="mb-1">No properties yet</h5>
+          <p className="mb-3">Add your first property to start tracking tenants and bills.</p>
+          <button className="btn btn-primary btn-glow" onClick={openCreate}>
+            <i className="bi bi-plus-lg" aria-hidden /> Add Property
+          </button>
+        </div>
       )}
 
       {showModal && (

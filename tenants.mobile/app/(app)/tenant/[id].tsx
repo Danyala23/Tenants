@@ -11,8 +11,10 @@ import {
 import { Menu } from 'react-native-paper';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { api } from '../../../src/api';
+import { useThemeMode } from '../../../src/context/ThemeContext';
 import { monthLabel } from '../../../src/utils/dateUtils';
 
 function getMonthsBack(endYear: number, endMonth: number, count: number): { year: number; month: number }[] {
@@ -37,7 +39,7 @@ function formatCollectedAt(collectedAt: string | null | undefined): string {
     return '—';
   }
 }
-import { Colors, Spacing, Radius } from '../../../src/theme';
+import { Colors, Spacing, Radius, Gradients, FontFamily } from '../../../src/theme';
 import type {
   Tenant,
   Occupancy,
@@ -51,6 +53,8 @@ export default function TenantDetailScreen() {
   const tenantId = parseInt(id ?? '0', 10);
   const navigation = useNavigation();
   const theme = useTheme();
+  const { theme: themeMode } = useThemeMode();
+  const isDark = themeMode === 'dark';
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [occupancies, setOccupancies] = useState<Occupancy[]>([]);
@@ -169,11 +173,16 @@ export default function TenantDetailScreen() {
     >
       {/* Profile Header */}
       <View style={styles.profileSection}>
-        <View style={[styles.avatarLarge, { backgroundColor: Colors.primarySurface }]}>
-          <Text style={[styles.avatarLargeText, { color: Colors.primary }]}>
+        <LinearGradient
+          colors={isDark ? Gradients.brandDark : Gradients.brand}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.avatarLarge}
+        >
+          <Text style={styles.avatarLargeText}>
             {tenant.name.charAt(0).toUpperCase()}
           </Text>
-        </View>
+        </LinearGradient>
         <Text variant="headlineSmall" style={[styles.profileName, { color: theme.colors.onBackground }]}>
           {tenant.name}
         </Text>
@@ -412,16 +421,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   avatarLarge: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
   avatarLargeText: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 32,
+    fontFamily: FontFamily.display,
+    color: '#FFFFFF',
   },
   profileName: {
     fontWeight: '700',

@@ -66,8 +66,10 @@ export function Navbar() {
           role="button"
           style={{ cursor: "pointer" }}
         >
-          <i className="bi bi-building" aria-hidden />
-          Property Manager
+          <span className="brand-mark" aria-hidden>
+            <i className="bi bi-houses" />
+          </span>
+          Haven
         </span>
         <div className="d-flex align-items-center gap-2">
           <button

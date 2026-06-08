@@ -4,6 +4,18 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import {
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import { getAppConfigIssues, hasBlockingConfigIssues } from '../src/appConfig';
 import { ConfigErrorScreen } from '../src/components/ConfigErrorScreen';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
@@ -52,6 +64,24 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={[styles.loading, { backgroundColor: Colors.background }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   if (hasBlockingConfigIssues()) {
     return (
       <ThemeProvider>

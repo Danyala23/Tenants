@@ -631,10 +631,18 @@ export function PropertyDetail() {
 
   if (loading || !property) {
     return (
-      <div className="container-fluid py-5 page-property-detail">
-        <p className="text-muted">
-          {loading ? "Loading..." : "Property not found"}
-        </p>
+      <div className="container-fluid py-5 page page-property-detail">
+        {loading ? (
+          <div className="loading-page">
+            <span className="spinner-ring" aria-hidden />
+            <span>Loading property…</span>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <i className="bi bi-house-slash empty-state-icon" aria-hidden />
+            <p className="text-muted mb-0">Property not found</p>
+          </div>
+        )}
       </div>
     );
   }

@@ -9,11 +9,12 @@ One-shot load of properties, floors, tenants, occupancies, and utility connectio
 | `tenants-data.json` | Source of truth — edit this when tenants or bill refs change |
 | `seed-from-json.sql` | Defines `seed_tenants_from_json(jsonb)` in Postgres |
 | `run-seed.ps1` | Loads JSON and runs the seed function (Windows / local) |
+| `run-seed.mjs` | Node fallback when `psql` is not installed (used automatically by `run-seed.ps1`) |
 
 ## Prerequisites
 
 - Postgres schema applied: `supabase/migrations/001_schema.sql`
-- `psql` on PATH
+- `psql` on PATH **or** Node.js 18+ (script auto-falls back to `npx pg`)
 - `DATABASE_URL` — Supabase **direct** Postgres connection string (Project Settings → Database)
 
 ## Run
@@ -26,7 +27,18 @@ $env:DATABASE_URL = "postgresql://postgres:YOUR_PASSWORD@db.YOUR_REF.supabase.co
 
 Re-running is safe for seeded properties: existing rows with matching `house_number` are deleted and recreated (cascade removes floors, occupancies, utilities, bills, and payments for those properties).
 
-## Supabase SQL editor (no psql)
+## Node only (no psql)
+
+`run-seed.ps1` installs `pg` automatically on first run. Or manually:
+
+```powershell
+cd scripts/seed
+npm install
+$env:DATABASE_URL = "postgresql://postgres:YOUR_PASSWORD@db.YOUR_REF.supabase.co:5432/postgres"
+node run-seed.mjs
+```
+
+## Supabase SQL editor (no psql, no Node)
 
 1. Run `seed-from-json.sql` once in the SQL editor.
 2. Copy the contents of `tenants-data.json` and execute:

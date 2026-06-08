@@ -39,7 +39,30 @@ function Invoke-Psql {
 }
 
 if (-not (Get-Command psql -ErrorAction SilentlyContinue)) {
-    Write-Error "psql not found on PATH. Install PostgreSQL client tools or use Supabase SQL editor with manual JSON paste."
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Error "psql not found on PATH and Node.js is not installed. Install PostgreSQL client tools, install Node.js, or use Supabase SQL editor (see README.md)."
+    }
+
+    Write-Host "psql not found; using Node.js..."
+    if (-not (Test-Path "$PSScriptRoot\node_modules\pg")) {
+        Write-Host "Installing pg (one-time)..."
+        npm install --prefix $PSScriptRoot --omit=dev
+        if ($LASTEXITCODE -ne 0) {
+            throw "npm install failed"
+        }
+    }
+
+    $env:DATABASE_URL = $DatabaseUrl
+    $nodeArgs = @("$PSScriptRoot\run-seed.mjs", "--json", $JsonPath)
+    if ($SkipFunctionInstall) {
+        $nodeArgs += "--skip-function-install"
+    }
+
+    node @nodeArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Seed failed with exit code $LASTEXITCODE"
+    }
+    exit 0
 }
 
 if (-not $SkipFunctionInstall) {

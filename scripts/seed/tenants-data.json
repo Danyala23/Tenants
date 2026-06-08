@@ -1,0 +1,299 @@
+{
+  "version": 1,
+  "properties": [
+    {
+      "houseNumber": "8-A",
+      "address": "Commercial Plaza 8-A",
+      "size": 6,
+      "floors": [
+        {
+          "key": "basement",
+          "floorNumber": 0,
+          "label": "Basement",
+          "occupancy": {
+            "tenantName": "Muhammad Haneef",
+            "rent": 0,
+            "securityDeposit": 0,
+            "startDate": "2025-09-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181887030",
+              "providerName": "LESCO"
+            }
+          ]
+        },
+        {
+          "key": "ground",
+          "floorNumber": 1,
+          "label": "Plaza Ground",
+          "occupancy": {
+            "tenantName": "Muhammad Haneef",
+            "rent": 77000,
+            "securityDeposit": 100000,
+            "startDate": "2025-09-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181887022",
+              "providerName": "LESCO"
+            }
+          ]
+        },
+        {
+          "key": "first",
+          "floorNumber": 2,
+          "label": "Plaza 1st F",
+          "occupancy": {
+            "tenantName": "Usman",
+            "rent": 31000,
+            "securityDeposit": 60000,
+            "startDate": "2025-07-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181887020",
+              "providerName": "LESCO"
+            }
+          ]
+        },
+        {
+          "key": "two-marla",
+          "floorNumber": 3,
+          "label": "2 Marla Flat",
+          "occupancy": {
+            "tenantName": "Muhammad Imran",
+            "rent": 25000,
+            "securityDeposit": 50000,
+            "startDate": "2025-05-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181887025",
+              "providerName": "LESCO"
+            }
+          ]
+        },
+        {
+          "key": "three-marla",
+          "floorNumber": 4,
+          "label": "3 Marla Flat",
+          "occupancy": {
+            "tenantName": "Inzamam",
+            "rent": 24300,
+            "securityDeposit": 20000,
+            "startDate": "2025-08-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "13112181947309U",
+              "providerName": "LESCO"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "houseNumber": "270-A",
+      "address": "270-A",
+      "size": 12,
+      "floors": [
+        {
+          "key": "upper",
+          "floorNumber": 1,
+          "label": "Upper",
+          "occupancy": {
+            "tenantName": "Ali Raza",
+            "rent": 45000,
+            "securityDeposit": 80000,
+            "startDate": "2025-12-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181870000",
+              "providerName": "LESCO"
+            },
+            {
+              "type": "Gas",
+              "consumerNumber": "53467826375",
+              "providerName": "SNGPL"
+            }
+          ]
+        },
+        {
+          "key": "lower",
+          "floorNumber": 0,
+          "label": "Lower",
+          "occupancy": {
+            "tenantName": "Aslam",
+            "rent": 50000,
+            "securityDeposit": 100000,
+            "startDate": "2025-09-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181868300",
+              "providerName": "LESCO"
+            },
+            {
+              "type": "Gas",
+              "consumerNumber": "79800185229",
+              "providerName": "SNGPL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "houseNumber": "105-D",
+      "address": "105-D",
+      "size": 8,
+      "sharedUtilities": [
+        {
+          "type": "Gas",
+          "consumerNumber": "92054675043",
+          "providerName": "SNGPL"
+        }
+      ],
+      "floors": [
+        {
+          "key": "upper",
+          "floorNumber": 1,
+          "label": "Upper",
+          "occupancy": {
+            "tenantName": "Me",
+            "rent": 0,
+            "securityDeposit": 0,
+            "startDate": "2020-01-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "13112181947308",
+              "providerName": "LESCO"
+            }
+          ]
+        },
+        {
+          "key": "lower",
+          "floorNumber": 0,
+          "label": "Lower",
+          "occupancy": {
+            "tenantName": "Me",
+            "rent": 0,
+            "securityDeposit": 0,
+            "startDate": "2020-01-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "13112181947301",
+              "providerName": "LESCO"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "houseNumber": "88/2-C",
+      "address": "88/2-C",
+      "size": 8,
+      "sharedUtilities": [
+        {
+          "type": "Gas",
+          "consumerNumber": "66158627340",
+          "providerName": "SNGPL"
+        }
+      ],
+      "floors": [
+        {
+          "key": "upper",
+          "floorNumber": 1,
+          "label": "Upper",
+          "occupancy": {
+            "tenantName": "Muhammad Ashraf",
+            "rent": 40000,
+            "securityDeposit": 54000,
+            "startDate": "2026-01-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181910400",
+              "providerName": "LESCO"
+            }
+          ]
+        },
+        {
+          "key": "lower",
+          "floorNumber": 0,
+          "label": "Lower",
+          "occupancy": {
+            "tenantName": "Ahmad Bin Zia",
+            "rent": 39000,
+            "securityDeposit": 66000,
+            "startDate": "2025-07-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181944088",
+              "providerName": "LESCO"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "houseNumber": "195-D",
+      "address": "195-D",
+      "size": 8,
+      "sharedUtilities": [
+        {
+          "type": "Gas",
+          "consumerNumber": "80203343175",
+          "providerName": "SNGPL"
+        }
+      ],
+      "floors": [
+        {
+          "key": "upper",
+          "floorNumber": 1,
+          "label": "Upper",
+          "occupancy": {
+            "tenantName": "Naeem Khalid",
+            "rent": 95000,
+            "securityDeposit": 60000,
+            "startDate": "2026-01-01"
+          },
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181957710",
+              "providerName": "LESCO"
+            }
+          ]
+        },
+        {
+          "key": "lower",
+          "floorNumber": 0,
+          "label": "Lower",
+          "utilities": [
+            {
+              "type": "Electricity",
+              "referenceNumber": "12112181933304",
+              "providerName": "LESCO"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
